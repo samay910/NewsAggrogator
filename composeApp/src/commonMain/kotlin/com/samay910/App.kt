@@ -2,6 +2,7 @@ package com.samay910
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.BottomNavigation
@@ -11,6 +12,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.runtime.Composable
@@ -22,9 +24,11 @@ import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import com.samay910.screen.Home.HomeViewmodel
 import com.samay910.tabs.Home.HomeTab
 import com.samay910.tabs.Interests.InterestsTab
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.dsl.module
 
 //    the client is created here, with the json configuration and error handelling as well as respective OS engines
 //val ktorApiClient = NewsApiClient(createHttpClient(getEngine()))
@@ -38,6 +42,15 @@ fun App() {
         TabNavigator(HomeTab) {
 //            here is how we can keep the shell of the app constant throughout
             Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(text = "News Aggregator") },
+                        backgroundColor = Color.White,
+                        contentColor = Color.Black,
+                        elevation = 10.dp,
+                        modifier = Modifier.fillMaxHeight(0.15f)
+                    )
+                },
                 content = {
 //                    Will ensure the subtree for each tab is used and not a massive overall naviagtion space accross the app
                     CurrentTab()
@@ -51,8 +64,8 @@ fun App() {
             )
         }
     }
-
 }
+
 //this will actually get the required tabs for a constant display accross screens
 @Composable
 private fun RowScope.TabNavigationItem(tab: Tab) {
@@ -69,13 +82,10 @@ private fun RowScope.TabNavigationItem(tab: Tab) {
     )
 }
 
-
-
-
-
-
-
-
+//here is how the dependency is initialised ot the time of application opening
+val homeModule = module {
+    factory { HomeViewmodel(get(),get()) }
+}
 
 
 

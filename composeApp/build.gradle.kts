@@ -37,11 +37,17 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             //            local android client
             implementation(libs.ktor.client.okhttp)
+
+            implementation(libs.koin.android)
+            implementation(libs.koin.androidx.compose)
+
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
+            implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -52,6 +58,12 @@ kotlin {
             implementation(libs.bundles.ktor)
 
             implementation(libs.bundles.voyeger)
+
+//            access the gradel dependencies as well
+            api(libs.koin.core)
+            implementation(libs.koin.compose)
+
+
         }
 //        required for IOS implementation
         nativeMain.dependencies {
