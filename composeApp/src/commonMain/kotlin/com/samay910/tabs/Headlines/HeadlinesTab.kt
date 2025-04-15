@@ -12,9 +12,10 @@ object HeadlinesTab:Tab {
     //    the content of the tab should hold the homepage.
     @Composable
     override fun Content() {
-        Navigator(HomeScreen()){ navigator ->
-            SlideTransition(navigator)
-        }
+        //        specifying the initial screen to be displayed for the tab
+//        Navigator(HomeScreen()){ navigator ->
+//            SlideTransition(navigator)
+//        }
     }
 
     override val options: TabOptions

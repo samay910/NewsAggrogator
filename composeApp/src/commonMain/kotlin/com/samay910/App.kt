@@ -37,7 +37,6 @@ import org.koin.dsl.module
 @Composable
 @Preview
 fun App() {
-
     MaterialTheme {
         TabNavigator(HomeTab) {
 //            here is how we can keep the shell of the app constant throughout
@@ -82,10 +81,7 @@ private fun RowScope.TabNavigationItem(tab: Tab) {
     )
 }
 
-//here is how the dependency is initialised ot the time of application opening
-val homeModule = module {
-    factory { HomeViewmodel(get(),get()) }
-}
+
 
 
 
