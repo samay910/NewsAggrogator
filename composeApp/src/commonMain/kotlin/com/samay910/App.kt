@@ -1,10 +1,14 @@
 package com.samay910
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
@@ -25,9 +29,11 @@ import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import com.samay910.screen.Home.HomeViewmodel
+import com.samay910.tabs.Headlines.HeadlinesTab
 import com.samay910.tabs.Home.HomeTab
 import com.samay910.tabs.Interests.InterestsTab
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.shared.Resources.getLogo
 import org.koin.dsl.module
 
 //    the client is created here, with the json configuration and error handelling as well as respective OS engines
@@ -42,13 +48,22 @@ fun App() {
 //            here is how we can keep the shell of the app constant throughout
             Scaffold(
                 topBar = {
-                    TopAppBar(
-                        title = { Text(text = "News Aggregator") },
-                        backgroundColor = Color.White,
-                        contentColor = Color.Black,
-                        elevation = 10.dp,
-                        modifier = Modifier.fillMaxHeight(0.15f)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(0.2f).background(color = Color.White)
+                    ) {
+//                        logo
+                        Image(
+                            painter = getLogo(),
+                            contentDescription = "App Logo" // Provide a meaningful description
+                            // Add modifiers as needed (e.g., size)
+                            ,modifier = Modifier.fillMaxSize(0.4f)
+                        )
+
+//                        option icon
+
+
+                    }
+
                 },
                 content = {
 //                    Will ensure the subtree for each tab is used and not a massive overall naviagtion space accross the app
@@ -58,6 +73,7 @@ fun App() {
                     BottomNavigation {
                         TabNavigationItem(HomeTab)
                         TabNavigationItem(InterestsTab)
+                        TabNavigationItem(HeadlinesTab)
                     }
                 }
             )
@@ -73,7 +89,7 @@ private fun RowScope.TabNavigationItem(tab: Tab) {
     BottomNavigationItem(
         selected = tabNavigator.current == tab,
         onClick = { tabNavigator.current = tab },
-        icon = { tab.options.icon?.let { Icon(painter = it, contentDescription = tab.options.title) } } ,
+        icon = { tab.options.icon?.let { Icon(painter = it, contentDescription = tab.options.title , tint=Color.Unspecified) } } ,
         modifier = Modifier.background(color = Color.White).padding(bottom = 15.dp).fillMaxSize(0.1f),
         selectedContentColor = Color.DarkGray,
         unselectedContentColor = Color.LightGray,

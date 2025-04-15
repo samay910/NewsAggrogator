@@ -1,36 +1,36 @@
-package com.samay910.tabs.Headlines
+package com.samay910.tabs.Interests
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
-import com.samay910.screen.Home.HomeScreen
 import com.shared.Resources.getTabIcon
 
-object HeadlinesTab:Tab {
-    //    the content of the tab should hold the homepage.
+object InterestsTab:Tab{
+//    the content of the tab should hold the homepage.
     @Composable
     override fun Content() {
-        //        specifying the initial screen to be displayed for the tab
-//        Navigator(HomeScreen()){ navigator ->
-//            SlideTransition(navigator)
-//        }
-    }
-
+    //        specifying the initial screen to be displayed for the tab
+//    Navigator(InterestsHomeScreen()){ navigator ->
+//        SlideTransition(navigator)
+//    }
+}
     override val options: TabOptions
         @Composable
         get() {
-            val title = "Headlines"
+            val title = "Interests"
 //            this icon itself doesnt need to be cached as it is only used here and no where else.
-            val icon = (getTabIcon("headlines"))
+            val icon = (getTabIcon("interests"))
 
             return remember {
                 TabOptions(
-                    index = 0u,
+                    index = 1u,
                     title = title,
                     icon = icon
                 )
             }
         }
+
 }
