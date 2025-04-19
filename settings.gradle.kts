@@ -30,5 +30,4 @@ dependencyResolutionManagement {
 
 include(":Network")
 include(":composeApp")
-include(":server")
 include(":shared")

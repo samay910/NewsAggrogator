@@ -17,10 +17,11 @@ object HomeTab:Tab{
     @Composable
     override fun Content() {
 //        specifying the initial screen to be displayed for the tab
-//        Navigator(){ navigator ->
-//            SlideTransition(navigator)
-//        }
+        Navigator(HomeScreen()){ navigator ->
+            SlideTransition(navigator)
+        }
     }
+
 
     override val options: TabOptions
         @Composable

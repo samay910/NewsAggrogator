@@ -2,11 +2,17 @@ package com.samay910
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.BottomNavigation
@@ -18,12 +24,22 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
@@ -40,6 +56,7 @@ import org.koin.dsl.module
 //val ktorApiClient = NewsApiClient(createHttpClient(getEngine()))
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App() {
@@ -48,21 +65,65 @@ fun App() {
 //            here is how we can keep the shell of the app constant throughout
             Scaffold(
                 topBar = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(0.2f).background(color = Color.White)
-                    ) {
-//                        logo
-                        Image(
+                    val navigator = LocalNavigator.currentOrThrow
+                    CenterAlignedTopAppBar(
+                        navigationIcon = {
+                            // --- Conditional Back Button Logic ---
+                            if (navigator.canPop) { // Check if navigator can pop back
+                                IconButton(onClick = { navigator.pop() }) { // Action: pop back
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back" // Accessibility
+                                    )
+                                }
+                            } },
+                        modifier = Modifier.fillMaxHeight(0.12f),
+                        title = {Image(
                             painter = getLogo(),
-                            contentDescription = "App Logo" // Provide a meaningful description
+                            contentDescription = "App Logo", // Provide a meaningful description
                             // Add modifiers as needed (e.g., size)
-                            ,modifier = Modifier.fillMaxSize(0.4f)
-                        )
+                            modifier = Modifier.fillMaxSize(0.6f)
+                        )},
+                        actions = {IconButton(
+                            onClick = { /* Handle action */ }
 
-//                        option icon
+                        ){
+                            Icon(imageVector = Icons.Filled.Menu, contentDescription = "More")
+                        }}
 
-
-                    }
+                    )
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(0.1f).background(color = Color.White),
+//                        //verticalAlignment = Alignment.CenterVertically,
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.SpaceBetween
+//                    ) {
+//                        //Spacer(modifier = Modifier.weight(1f))
+//                        Box(
+//                            modifier = Modifier.fillMaxWidth(0.7f)
+//                        ){
+//
+//                        }
+////                        logo
+//
+//
+//
+//
+////                        option icon
+//                        // Spacer to push the options icon to the right
+//                        //Spacer(modifier = Modifier.weight(1f))
+//
+//                        // Options Icon
+//                        Icon(
+//                            imageVector = Icons.Filled.Menu,
+//                            contentDescription = "Options",
+//                            modifier = Modifier.padding(end = 16.dp).align(Alignment.CenterVertically)// Adjust size as needed
+//                                 // Use weight for horizontal sizing relative to other items
+//
+//                        )
+//
+//
+//                    }
 
                 },
                 content = {
