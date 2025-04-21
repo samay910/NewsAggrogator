@@ -44,6 +44,7 @@ import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import com.samay910.networking.api_clients.news_api.NewsApiClient
 import com.samay910.screen.Home.HomeViewmodel
 import com.samay910.tabs.Headlines.HeadlinesTab
 import com.samay910.tabs.Home.HomeTab
@@ -59,7 +60,9 @@ import org.koin.dsl.module
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
-fun App() {
+fun App(
+    NewsApiClient: NewsApiClient
+) {
     MaterialTheme {
         TabNavigator(HomeTab) {
 //            here is how we can keep the shell of the app constant throughout

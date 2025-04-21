@@ -28,6 +28,6 @@ dependencyResolutionManagement {
     }
 }
 
-include(":Network")
+include(":network")
 include(":composeApp")
 include(":shared")

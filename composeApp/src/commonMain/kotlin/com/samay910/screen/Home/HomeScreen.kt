@@ -93,19 +93,12 @@ class HomeScreen:Screen{
                     })}
 
         ){
-
-
-
             if (displaySummary){
                 SummaeyDialog(viewmodel = viewModel)
             }
             else if (displayInfo){
                 InformationDialog(viewmodel = viewModel)
             }
-
-
-
-
 //            the initial description and link to the help icon explaining aspects of the app
             Row {
                 Box(modifier = Modifier.fillMaxWidth(0.9f)){
@@ -117,7 +110,6 @@ class HomeScreen:Screen{
                     onClick = {
 //                        this will display a simple alert dialog box explaining verbally what the screen offers and how to use it
                         viewModel.updateDisplayInfo(true)
-
                     /* Handle action */
                     }
 
@@ -246,7 +238,6 @@ class HomeScreen:Screen{
 
                         ){
                             Row{
-
                                 Image(
                                     painter = getImportantImage(),
                                     contentDescription = "Important",

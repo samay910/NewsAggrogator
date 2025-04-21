@@ -63,6 +63,8 @@ class HomeViewmodel:ScreenModel {
         displayInfo = input
     }
 
+//    when updating the input object the q variable needs to be a combination
+
 
 
 

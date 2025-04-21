@@ -53,7 +53,10 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+
+//            added modules
             implementation(projects.shared)
+            implementation(projects.network)
 
             implementation(libs.bundles.ktor)
 
