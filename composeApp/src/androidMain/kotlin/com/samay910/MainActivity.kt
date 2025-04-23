@@ -15,24 +15,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            App(
-                //            here the Http clients used within the applicatoion are specified for native implementation
-//            newsdata client
-
-                NewsApiClient= remember{
-                NewsApiClient(createHttpClient(OkHttp.create()))
-            }
-
-            )
-
-
-
+            App()
         }
     }
 }
-
-//@Preview
-//@Composable
-//fun AppAndroidPreview() {
-//    App()
-//}

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class interest_input(
     val q: String,
-    val source : String,
     val domain : String,
     val pageSize : Int,
+    val pageNumber: Int
 )

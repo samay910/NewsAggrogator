@@ -44,6 +44,7 @@ import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
+import com.samay910.module.initKoin
 import com.samay910.networking.api_clients.news_api.NewsApiClient
 import com.samay910.screen.Home.HomeViewmodel
 import com.samay910.tabs.Headlines.HeadlinesTab
@@ -61,8 +62,9 @@ import org.koin.dsl.module
 @Composable
 @Preview
 fun App(
-    NewsApiClient: NewsApiClient
 ) {
+//    required for the dependency injection after application launch
+    initKoin()
     MaterialTheme {
         TabNavigator(HomeTab) {
 //            here is how we can keep the shell of the app constant throughout
@@ -160,6 +162,8 @@ private fun RowScope.TabNavigationItem(tab: Tab) {
         label = { Text(text = tab.options.title, fontSize = 15.sp) }
     )
 }
+
+
 
 
 

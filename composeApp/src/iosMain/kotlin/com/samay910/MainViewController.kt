@@ -7,7 +7,5 @@ import io.ktor.client.engine.darwin.Darwin
 import networking.createHttpClient
 
 fun MainViewController() = ComposeUIViewController { App(
-    NewsApiClient= remember{
-        NewsApiClient(createHttpClient(Darwin.create()))
-    }
+
 ) }

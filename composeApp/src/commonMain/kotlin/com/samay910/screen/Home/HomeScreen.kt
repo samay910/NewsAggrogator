@@ -30,6 +30,7 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -40,6 +41,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.shared.Resources.getGeminilogo
@@ -70,7 +73,9 @@ class HomeScreen:Screen{
         val focusManager = LocalFocusManager.current
 
         val navigator = LocalNavigator.currentOrThrow
-        val viewModel = navigator.rememberNavigatorScreenModel { HomeViewmodel() }
+//        this ties the scope of the viewmodel to the relative navigation of the tab
+//        when the user changes the tab the viewmodel will be reset
+        val viewModel : HomeViewmodel = koinScreenModel()
 
         var displaySummary by remember{mutableStateOf(false)}
         displaySummary=viewModel.displaySummary
@@ -398,6 +403,7 @@ fun GenerateButton(viewmodel: HomeViewmodel){
             //to implement API call
             viewmodel.updateSummaryGenerating(true)
 //            here add a check empty field
+
         },
         modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
 //        change the shape
@@ -460,13 +466,25 @@ fun ViewSummaryButton(viewmodel: HomeViewmodel){
 @Composable
 fun SummaeyDialog(viewmodel: HomeViewmodel) {
     var displaySummary by remember { mutableStateOf(false) }
+
+    //        this is a variable used to monitor status of API call progression and allow fo displaying of loading bar
+    val getNewsDataStatus by viewmodel.articlesLoading.collectAsState()
+//    variable to store flow state for summary generation
+    val getSummaryStatus by viewmodel.summaryLoading.collectAsState()
+
+    var notice by remember { mutableStateOf("") }
+    notice=viewmodel.notice
+    var summary by remember { mutableStateOf("") }
+    summary=viewmodel.summary
+
     displaySummary = viewmodel.displaySummary
+
     BasicAlertDialog(
         onDismissRequest = {
 //            this makes it so that if the user clicks outside the box an action is performed
             //viewmodel.updateDisplaySummary(false)
         }
-    ){
+    ) {
         Surface(
             modifier = Modifier.fillMaxSize(0.8f),
             shape = RoundedCornerShape(8.dp)
@@ -478,24 +496,83 @@ fun SummaeyDialog(viewmodel: HomeViewmodel) {
                 modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
             ) {
 //                here is where the summary will be displayed and the other components will be involved
-                IconButton(
-                    onClick = {
-                        // Define dismiss action & close dialog
-                        println("Dismiss button clicked.") // Optional logging
-                        viewmodel.updateDisplaySummary(false)
-                    },
-                    modifier = Modifier.fillMaxSize(0.2f)
+                Row (
+                    modifier = Modifier.fillMaxWidth(1f),
+                    horizontalArrangement = Arrangement.Start
                 ){
-                    Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
-                    Text("Close")
+                    IconButton(
+                        onClick = {
+                            // Define dismiss action & close dialog
+                            println("Dismiss button clicked.") // Optional logging
+                            viewmodel.updateDisplaySummary(false)
+                        },
+                        modifier = Modifier.fillMaxWidth(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+
+                            ) {
+                            Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
+                            Text("Close")
+                        }
+                }
+
+
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
+                Row(
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ) {
+                    Text("Summary:")
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ) {
+//                   while the NewsAPI is being called
+                    if (getNewsDataStatus){
+                        Text("Getting articles...")
+                        CircularProgressIndicator()
+                        if (getSummaryStatus){
+                            Text("Generating Summary now...")
+                            CircularProgressIndicator()
+                        }
+                    }
+//                    what happens after article data is loads
+//                    here the results will be displayed
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+//
+                Column(
+                    modifier = Modifier.fillMaxWidth(1f)
+                ) {
+                    Text(notice, fontSize = 15.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedCard(
+                        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                        ),
+                        border = BorderStroke(1.dp, androidx.compose.ui.graphics.Color.Black),
+                    ) {
+                        Column (
+                            modifier = Modifier.padding(10.dp).fillMaxWidth(1f)
+                        ){
+                            Text(summary)
+                        }
+                    }
+//                    here i will display the links
                 }
             }
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+//here i must specify that the domain input requires for the website
 fun InformationDialog(viewmodel: HomeViewmodel){
     var displayInfo by remember { mutableStateOf(false) }
     displayInfo = viewmodel.displayInfo
