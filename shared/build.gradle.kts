@@ -27,6 +27,7 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
+
             // put your Multiplatform dependencies here
             implementation(compose.runtime)
             implementation(compose.foundation)

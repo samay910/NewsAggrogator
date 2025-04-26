@@ -1,5 +1,6 @@
 package com.shared
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import newsaggregatorapplication.shared.generated.resources.Res
@@ -15,7 +16,6 @@ import newsaggregatorapplication.shared.generated.resources.interest_tab_icon
 import newsaggregatorapplication.shared.generated.resources.logo
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
-
 
 object Resources {
     object tab_Icon{
@@ -82,4 +82,5 @@ object Resources {
         }
 
     }
+
 }
