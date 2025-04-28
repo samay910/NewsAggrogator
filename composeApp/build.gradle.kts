@@ -9,6 +9,8 @@ plugins {
     alias(libs.plugins.composeCompiler)
 
     alias(libs.plugins.kotlin.serialization)
+
+    alias(libs.plugins.sqlDelight)
 }
 
 kotlin {
@@ -40,15 +42,15 @@ kotlin {
 
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
-
-
+            implementation(libs.sqldelight.android)
         }
         commonMain.dependencies {
 //            Used for getting images given the url
             implementation("io.coil-kt.coil3:coil-compose:3.1.0")
             implementation("io.coil-kt.coil3:coil-network-okhttp:3.1.0")
 
-
+            implementation("app.cash.sqldelight:runtime:2.0.2")
+            implementation("app.cash.sqldelight:coroutines-extensions:2.0.2")
             implementation(libs.autolinktext)
 //            required for the date and time
             // In commonMain dependencies for KMP
@@ -78,9 +80,15 @@ kotlin {
 
         }
 //        required for IOS implementation
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.ios)
+        }
         nativeMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.ios)
         }
+
 
     }
 }
@@ -114,5 +122,13 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+}
+
+sqldelight{
+    databases{
+        create("InterestDatabase"){
+            packageName="com.samay910"
+        }
+    }
 }
 

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -63,74 +64,13 @@ import org.koin.dsl.module
 @Preview
 fun App(
 ) {
-//    required for the dependency injection after application launch
-    initKoin()
+
+//koin is initialised natively on both ios and android
     MaterialTheme {
         TabNavigator(HomeTab) {
 //            here is how we can keep the shell of the app constant throughout
             Scaffold(
-                topBar = {
-                    val navigator = LocalNavigator.currentOrThrow
-                    CenterAlignedTopAppBar(
-                        navigationIcon = {
-                            // --- Conditional Back Button Logic ---
-                            if (navigator.canPop) { // Check if navigator can pop back
-                                IconButton(onClick = { navigator.pop() }) { // Action: pop back
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Back" // Accessibility
-                                    )
-                                }
-                            } },
-                        modifier = Modifier.fillMaxHeight(0.12f),
-                        title = {Image(
-                            painter = getLogo(),
-                            contentDescription = "App Logo", // Provide a meaningful description
-                            // Add modifiers as needed (e.g., size)
-                            modifier = Modifier.fillMaxSize(0.6f)
-                        )},
-                        actions = {IconButton(
-                            onClick = { /* Handle action */ }
-
-                        ){
-                            Icon(imageVector = Icons.Filled.Menu, contentDescription = "More")
-                        }}
-
-                    )
-//                    Row(
-//                        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(0.1f).background(color = Color.White),
-//                        //verticalAlignment = Alignment.CenterVertically,
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        horizontalArrangement = Arrangement.SpaceBetween
-//                    ) {
-//                        //Spacer(modifier = Modifier.weight(1f))
-//                        Box(
-//                            modifier = Modifier.fillMaxWidth(0.7f)
-//                        ){
-//
-//                        }
-////                        logo
-//
-//
-//
-//
-////                        option icon
-//                        // Spacer to push the options icon to the right
-//                        //Spacer(modifier = Modifier.weight(1f))
-//
-//                        // Options Icon
-//                        Icon(
-//                            imageVector = Icons.Filled.Menu,
-//                            contentDescription = "Options",
-//                            modifier = Modifier.padding(end = 16.dp).align(Alignment.CenterVertically)// Adjust size as needed
-//                                 // Use weight for horizontal sizing relative to other items
-//
-//                        )
-//
-//
-//                    }
-
-                },
+//                the top bar is native to the screens to ensure a backbutton is accessable where neccisary
                 content = {
 //                    Will ensure the subtree for each tab is used and not a massive overall naviagtion space accross the app
                     CurrentTab()

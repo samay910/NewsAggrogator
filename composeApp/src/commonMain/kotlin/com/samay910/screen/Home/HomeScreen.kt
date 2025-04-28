@@ -24,7 +24,9 @@ import androidx.compose.material.ExposedDropdownMenuBox
 import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
@@ -33,6 +35,7 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +44,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -80,6 +84,7 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.shared.Resources.getGeminilogo
 import com.shared.Resources.getImageVectorIcon
 import com.shared.Resources.getImportantImage
+import com.shared.Resources.getLogo
 import sh.calvin.autolinktext.TextMatcher
 import sh.calvin.autolinktext.TextRule
 import sh.calvin.autolinktext.TextRule.Url
@@ -88,12 +93,16 @@ import util.NetworkError
 
 class HomeScreen:Screen{
     @OptIn(ExperimentalMaterial3Api::class)
+
+
     @Composable
     override fun Content(){
+        val navigator = LocalNavigator.currentOrThrow
+
 //        this is required to maintain a smooth experence accross the application
         val focusManager = LocalFocusManager.current
 
-        val navigator = LocalNavigator.currentOrThrow
+
 //        this ties the scope of the viewmodel to the relative navigation of the tab
 //        when the user changes the tab the viewmodel will be reset
         val viewModel : HomeViewmodel = koinScreenModel()
@@ -110,204 +119,248 @@ class HomeScreen:Screen{
 //        esures the coulmn is scrollable
         val scrollState = rememberScrollState()
 
-        Column(
-            modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
-                .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
-                detectTapGestures(
-                    onPress = { /* Optional: Track press state */ },
-                    onTap = {
-                        // When tapped, clear focus from the currently focused element
-                        println("Tapped outside TextField - Clearing focus") // Log for confirmation
-                        focusManager.clearFocus()
-                    })}
+        Scaffold (
+            topBar = {
+                CenterAlignedTopAppBar(
+                    navigationIcon = {
+                        // --- Conditional Back Button Logic ---
+                        if (navigator.canPop) { // Check if navigator can pop back
+                            IconButton(onClick = { navigator.pop() }, modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)) { // Action: pop back
+                                Column (
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
 
-        ){
-            if (displaySummary){
-                SummaeyDialog(viewmodel = viewModel)
-            }
-            else if (displayInfo){
-                InformationDialog(viewmodel = viewModel)
-            }
-            else if (displayWarning){
-                WarningDialog(viewmodel = viewModel)
-            }
-//            the initial description and link to the help icon explaining aspects of the app
-            Row {
-                Box(modifier = Modifier.fillMaxWidth(0.9f)){
-                    Text("Please specify your interest below to generate an AI summary of current news surrounding your interest.\n" +
-                            "All ")
-                }
-                IconButton(
-//                    display a popup with specification as to how to interact with the screen and what utility is provided
-                    onClick = {
-//                        this will display a simple alert dialog box explaining verbally what the screen offers and how to use it
-                        viewModel.updateDisplayInfo(true)
-                    /* Handle action */
-                    }
+                                ){
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back" // Accessibility
+                                    )
+                                    Text("Back")
+                                }
 
-                ){
-                    Icon(imageVector = Icons.Outlined.Info, contentDescription = "More", modifier = Modifier.fillMaxSize())
-                }
-
-
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(
-                    text = "Please set at least one of the below filters: ",
-            style = TextStyle(fontWeight = FontWeight.Bold)
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-//            text field for specifying interest via text
-            Row {
-                //    this is how i can retain the data stored in the viewmodel accross navigations within the app
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(1f),
-                    value = viewModel.textFilter,
-                    onValueChange = { textFilter -> viewModel.updatetextFilter(textFilter) },
-                    label = { Text("Specify interest via text") },
-                    trailingIcon = {
-                        IconButton(onClick = {
-//                            clear the input
-                            viewModel.updatetextFilter("")
-                        }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Clear,
-                                contentDescription = "Send"
-                            )
+                            }
+                        }else{
+                            Spacer(modifier = Modifier.fillMaxSize(0.2f))
                         }
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-//            2 dropdown menus for category and country
-            Row {
-
-                Box(modifier = Modifier.weight(0.4f)){
-                    DropdownMenus(viewmodel = viewModel,type = "category")
-                }
-                Spacer(modifier = Modifier.weight(0.1f))
-
-                Box(modifier = Modifier.weight(0.4f)){
-                    DropdownMenus(viewmodel = viewModel,type = "country")
-                }
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-//            text feild for specifying news publisher by name
-            Row {
-                //    this is how i can retain the data stored in the viewmodel accross navigations within the app
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth(1f),
-                    value = viewModel.publisher,
-                    onValueChange = { publisher -> viewModel.updatePublisher(publisher) },
-                    label = { Text("Specify news publisher") },
-                    trailingIcon = {
-                        IconButton(onClick = {
-//                            clear the input
-                            viewModel.updatePublisher("")
-                        }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Clear,
-                                contentDescription = "Send"
-                            )
-                        }
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-
-//            associative form buttons, including clear,generate and view summary
-            Row(
-                modifier = Modifier
-                    .fillMaxHeight(0.3f))
-            {
-//                clear button
-                Box(
-                   modifier = Modifier.weight(0.3f)
+                    },
+                    modifier = Modifier.height(100.dp),
+                    title = {Image(
+                        painter = getLogo(),
+                        contentDescription = "App Logo", // Provide a meaningful description
+                        // Add modifiers as needed (e.g., size)
+                        modifier = Modifier.fillMaxSize(0.8f)
+                    )},
+                    actions = {
+                        IconButton(
+                            onClick = { /* Handle action */ },
+                            modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)
                         ){
-                    ClearButton(viewmodel = viewModel)
-                }
+                            Icon(imageVector = Icons.Filled.Menu, contentDescription = "More")
+                        }}
 
-                Spacer(modifier = Modifier.weight(0.01f))
-//                generate button
-                Box(
-                    modifier = Modifier.weight(0.4f)
+                )
+            },
+            content = {innerPadding ->
+                Column(
+                    modifier = Modifier.padding(innerPadding).padding(20.dp).verticalScroll(scrollState)
+                        .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
+                        detectTapGestures(
+                            onPress = { /* Optional: Track press state */ },
+                            onTap = {
+                                // When tapped, clear focus from the currently focused element
+                                println("Tapped outside TextField - Clearing focus") // Log for confirmation
+                                focusManager.clearFocus()
+                            })}
+
                 ){
-                    GenerateButton(viewmodel = viewModel)
-                }
-
-                Spacer(modifier = Modifier.weight(0.01f))
-//                view summary button
-//                summary button implementation is here for easier management of if the view is available or not
-                Box(
-                    modifier = Modifier.weight(0.4f)
-                ){
-                    ViewSummaryButton(viewmodel = viewModel)
-                }
-
-
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-
-//            Additional warning section to emphisise usage of Gemini to provide the AI response
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .fillMaxHeight(0.3f),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-
-            ) {
-//                info section clarifying how the AI summary is generated
-                Column{
-                    OutlinedCard(
-                        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                        ),
-                        border = BorderStroke(1.dp, androidx.compose.ui.graphics.Color.Black),
-                    ) {
-                        Column (
-                            modifier = Modifier.padding(10.dp).fillMaxWidth(1f)
+                    if (displaySummary){
+                        SummaeyDialog(viewmodel = viewModel)
+                    }
+                    else if (displayInfo){
+                        InformationDialog(viewmodel = viewModel)
+                    }
+                    else if (displayWarning){
+                        WarningDialog(viewmodel = viewModel)
+                    }
+        //            the initial description and link to the help icon explaining aspects of the app
+                    Row {
+                        Box(modifier = Modifier.fillMaxWidth(0.9f)){
+                            Text("Please specify your interest below to generate an AI summary of current news surrounding your interest.\n" +
+                                    "All ")
+                        }
+                        IconButton(
+        //                    display a popup with specification as to how to interact with the screen and what utility is provided
+                            onClick = {
+        //                        this will display a simple alert dialog box explaining verbally what the screen offers and how to use it
+                                viewModel.updateDisplayInfo(true)
+                            /* Handle action */
+                            }
 
                         ){
-                            Row{
-                                Image(
-                                    painter = getImportantImage(),
-                                    contentDescription = "Important",
-                                    modifier = Modifier
-                                        .fillMaxSize(0.1f),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
+                            Icon(imageVector = Icons.Outlined.Info, contentDescription = "More", modifier = Modifier.fillMaxSize())
+                        }
 
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(0.8f)){
-                                    Text("As you may have realized, our summaries are powered by Googles ")
+
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                            text = "Please set at least one of the below filters: ",
+                    style = TextStyle(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+        //            text field for specifying interest via text
+                    Row {
+                        //    this is how i can retain the data stored in the viewmodel accross navigations within the app
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(1f),
+                            value = viewModel.textFilter,
+                            onValueChange = { textFilter -> viewModel.updatetextFilter(textFilter) },
+                            label = { Text("Specify interest via text") },
+                            trailingIcon = {
+                                IconButton(onClick = {
+        //                            clear the input
+                                    viewModel.updatetextFilter("")
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Clear,
+                                        contentDescription = "Send"
+                                    )
                                 }
                             }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+        //            2 dropdown menus for category and country
+                    Row {
 
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(1f),
-                                horizontalArrangement = Arrangement.End
-                            ) {
+                        Box(modifier = Modifier.weight(0.4f)){
+                            DropdownMenus(viewmodel = viewModel,type = "category")
+                        }
+                        Spacer(modifier = Modifier.weight(0.1f))
 
-                                Image(
-                                    painter = getGeminilogo(),
-                                    contentDescription = "App Logo", // Provide a meaningful description
-                                    // Add modifiers as needed (e.g., size)
-                                    modifier = Modifier.fillMaxSize(0.6f),
-                                    contentScale = ContentScale.Crop
-
-                                )
-                            }
+                        Box(modifier = Modifier.weight(0.4f)){
+                            DropdownMenus(viewmodel = viewModel,type = "country")
                         }
                     }
+                    Spacer(modifier = Modifier.height(20.dp))
+        //            text feild for specifying news publisher by name
+                    Row {
+                        //    this is how i can retain the data stored in the viewmodel accross navigations within the app
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth(1f),
+                            value = viewModel.publisher,
+                            onValueChange = { publisher -> viewModel.updatePublisher(publisher) },
+                            label = { Text("Specify news publisher") },
+                            trailingIcon = {
+                                IconButton(onClick = {
+        //                            clear the input
+                                    viewModel.updatePublisher("")
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Clear,
+                                        contentDescription = "Send"
+                                    )
+                                }
+                            }
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+
+        //            associative form buttons, including clear,generate and view summary
+                    Row(
+                        modifier = Modifier
+                            .fillMaxHeight(0.3f))
+                    {
+        //                clear button
+                        Box(
+                           modifier = Modifier.weight(0.3f)
+                                ){
+                            ClearButton(viewmodel = viewModel)
+                        }
+
+                        Spacer(modifier = Modifier.weight(0.01f))
+        //                generate button
+                        Box(
+                            modifier = Modifier.weight(0.4f)
+                        ){
+                            GenerateButton(viewmodel = viewModel)
+                        }
+
+                        Spacer(modifier = Modifier.weight(0.01f))
+        //                view summary button
+        //                summary button implementation is here for easier management of if the view is available or not
+                        Box(
+                            modifier = Modifier.weight(0.4f)
+                        ){
+                            ViewSummaryButton(viewmodel = viewModel)
+                        }
+
+
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+
+        //            Additional warning section to emphisise usage of Gemini to provide the AI response
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .height(150.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+
+                    ) {
+        //                info section clarifying how the AI summary is generated
+                        Column{
+                            OutlinedCard(
+                                modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                ),
+                                border = BorderStroke(1.dp, androidx.compose.ui.graphics.Color.Black),
+                            ) {
+                                Column (
+                                    modifier = Modifier.padding(10.dp).fillMaxWidth(1f)
+
+                                ){
+                                    Row{
+                                        Image(
+                                            painter = getImportantImage(),
+                                            contentDescription = "Important",
+                                            modifier = Modifier
+                                                .fillMaxWidth(0.1f),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth(0.8f)){
+                                            Text("As you may have realized, our summaries are powered by Googles ")
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(1f),
+                                        horizontalArrangement = Arrangement.End
+                                    ) {
+
+                                        Image(
+                                            painter = getGeminilogo(),
+                                            contentDescription = "App Logo", // Provide a meaningful description
+                                            // Add modifiers as needed (e.g., size)
+                                            modifier = Modifier.fillMaxWidth(0.6f),
+                                            contentScale = ContentScale.Crop
+
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+
+                    }
                 }
-
-
             }
-        }
+        )
 
     }
 }
@@ -704,7 +757,7 @@ fun InformationDialog(viewmodel: HomeViewmodel){
                         onClick = {
                             // Define dismiss action & close dialog
                             println("Dismiss button clicked.") // Optional logging
-                            viewmodel.updateDisplayWarning(false)
+                            viewmodel.updateDisplayInfo(false)
                         },
                         modifier = Modifier.fillMaxWidth(1f)
                     ) {

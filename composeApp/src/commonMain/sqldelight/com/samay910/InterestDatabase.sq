@@ -1,0 +1,17 @@
+CREATE TABLE InterestDatabase (
+    id INTEGER PRIMARY KEY NOT NULL,
+    q TEXT,
+    topic TEXT,
+    location TEXT,
+    source TEXT
+);
+
+checkFeedExists:
+SELECT EXISTS (SELECT 1 FROM InterestDatabase WHERE id==?);
+
+saveInterest:
+INSERT INTO InterestDatabase(id,q,topic,location,source)
+VALUES (?,?,?,?,?);
+
+removeSavedInterest:
+DELETE FROM InterestDatabase WHERE id=?;

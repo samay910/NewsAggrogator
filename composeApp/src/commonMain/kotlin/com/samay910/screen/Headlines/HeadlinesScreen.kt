@@ -1,6 +1,7 @@
 package com.samay910.screen.Headlines
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -24,9 +25,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Info
@@ -34,10 +37,12 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -71,8 +76,10 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.DialogProperties
+import com.shared.Resources.getLogo
 
 class HeadlinesScreen: Screen {
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
 //Create the viewmodel for the headlines screen
@@ -98,88 +105,134 @@ class HeadlinesScreen: Screen {
 
 //Ensures the column is scrollable
         val scrollState = rememberScrollState()
-        Column(
-            modifier = Modifier.padding(20.dp)
-                .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
-                    detectTapGestures(
-                        onPress = { /* Optional: Track press state */ },
-                        onTap = {
-                            // When tapped, clear focus from the currently focused element
-                            println("Tapped outside TextField - Clearing focus") // Log for confirmation
-                            focusManager.clearFocus()
-                        })
-                }
+        Scaffold (
+            topBar = {
+                CenterAlignedTopAppBar(
+                    navigationIcon = {
+                        // --- Conditional Back Button Logic ---
+                        if (navigator.canPop) { // Check if navigator can pop back
+                            IconButton(onClick = { navigator.pop() }, modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)) { // Action: pop back
+                                Column (
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
 
-        ){
+                                ){
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back" // Accessibility
+                                    )
+                                    Text("Back")
+                                }
+
+                            }
+                        }else{
+                            Spacer(modifier = Modifier.fillMaxSize(0.2f))
+                        }
+                    },
+                    modifier = Modifier.height(100.dp),
+                    title = {Image(
+                        painter = getLogo(),
+                        contentDescription = "App Logo", // Provide a meaningful description
+                        // Add modifiers as needed (e.g., size)
+                        modifier = Modifier.fillMaxSize(0.8f)
+                    )},
+                    actions = {
+                        IconButton(
+                            onClick = { /* Handle action */ },
+                            modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)
+                        ){
+                            Icon(imageVector = Icons.Filled.Menu, contentDescription = "More")
+                        }}
+
+                )
+            },
+            content = {innerPadding ->
+                Column(
+                    modifier = Modifier.padding(innerPadding).padding(20.dp)
+                        .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
+                            detectTapGestures(
+                                onPress = { /* Optional: Track press state */ },
+                                onTap = {
+                                    // When tapped, clear focus from the currently focused element
+                                    println("Tapped outside TextField - Clearing focus") // Log for confirmation
+                                    focusManager.clearFocus()
+                                })
+                        }
+
+                ) {
 //Check if a dialog should be displayed
-            if (displayInfo){
-                InformationDialog(viewmodel = viewModel)
-            }
-            else if (displayWarning){
-                WarningDialog(viewmodel = viewModel)
-            }
-            else if (displayArticle){
-                ArticleDetailsDialog(viewmodel = viewModel)
-            }
+                    if (displayInfo) {
+                        InformationDialog(viewmodel = viewModel)
+                    } else if (displayWarning) {
+                        WarningDialog(viewmodel = viewModel)
+                    } else if (displayArticle) {
+                        ArticleDetailsDialog(viewmodel = viewModel)
+                    }
 
 //Area to provide a breif description and acess to the info dialog
-            Row(
+                    Row(
 
-            ) {
-                Box(modifier = Modifier.fillMaxWidth(0.9f)){
-                    Text("Below please specify any text that will help provide the latest headlines more relavant to you, if you want genral headlines just click generate")
-                }
-                IconButton(
+                    ) {
+                        Box(modifier = Modifier.fillMaxWidth(0.9f)) {
+                            Text("Below please specify any text that will help provide the latest headlines more relavant to you, if you want genral headlines just click generate")
+                        }
+                        IconButton(
 //display a popup with specification as to how to interact with the screen and what utility is provided
-                    onClick = {
+                            onClick = {
 //this will display a simple alert dialog box explaining verbally what the screen offers and how to use it
-                        viewModel.updateDisplayInfo(true)
-                        /* Handle action */
-                    }
-                ){
-                    Icon(imageVector = Icons.Outlined.Info, contentDescription = "More", modifier = Modifier.fillMaxSize())
-                }
-
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-//Provide input field where the default is set to "Global headlines"
-            Row (
-                modifier = Modifier.fillMaxWidth(1f), verticalAlignment = Alignment.CenterVertically
-            ){
-                //    this is how i can retain the data stored in the viewmodel accross navigations within the app
-                OutlinedTextField(
-                    modifier = Modifier.weight(0.6f),
-                    value = viewModel.textFilter,
-                    onValueChange = { textFilter -> viewModel.updatetextFilter(textFilter) },
-                    label = { Text("Enter text to filter headlines") },
-                    trailingIcon = {
-                        IconButton(onClick = {
-//                            clear the input
-                            viewModel.updatetextFilter("")
-                        }) {
+                                viewModel.updateDisplayInfo(true)
+                                /* Handle action */
+                            }
+                        ) {
                             Icon(
-                                imageVector = Icons.Outlined.Clear,
-                                contentDescription = "Send"
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = "More",
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
+
                     }
-                )
-                Spacer(modifier = Modifier.weight(0.05f))
+                    Spacer(modifier = Modifier.height(20.dp))
+//Provide input field where the default is set to "Global headlines"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        //    this is how i can retain the data stored in the viewmodel accross navigations within the app
+                        OutlinedTextField(
+                            modifier = Modifier.weight(0.6f),
+                            value = viewModel.textFilter,
+                            onValueChange = { textFilter -> viewModel.updatetextFilter(textFilter) },
+                            label = { Text("Enter text to filter headlines") },
+                            trailingIcon = {
+                                IconButton(onClick = {
+//                            clear the input
+                                    viewModel.updatetextFilter("")
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Clear,
+                                        contentDescription = "Send"
+                                    )
+                                }
+                            }
+                        )
+                        Spacer(modifier = Modifier.weight(0.05f))
 //                Button used to generate the summary
-                Box(
-                    modifier = Modifier.weight(0.35f)
-                ){
-                    GenerateButton(viewmodel = viewModel)
-                }
-            }
-            Spacer(modifier = Modifier.height(20.dp))
+                        Box(
+                            modifier = Modifier.weight(0.35f)
+                        ) {
+                            GenerateButton(viewmodel = viewModel)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
 
 //here the lazy column will be displayed in a fixed position
-                DisplayArticles(viewmodel = viewModel)
+                    DisplayArticles(viewmodel = viewModel)
 
 
-        }
-
+                }
+            }
+        )
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
@@ -214,7 +267,7 @@ fun InformationDialog(viewmodel: HeadlinesViewmodel){
                             onClick = {
                                 // Define dismiss action & close dialog
                                 println("Dismiss button clicked.") // Optional logging
-                                viewmodel.updateDisplayWarning(false)
+                                viewmodel.updateDisplayInfo(false)
                             },
                             modifier = Modifier.fillMaxWidth(1f)
                         ) {
