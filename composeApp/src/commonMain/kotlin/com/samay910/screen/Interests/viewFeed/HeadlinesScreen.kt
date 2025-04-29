@@ -1,4 +1,4 @@
-package com.samay910.screen.Headlines
+package com.samay910.screen.Interests.viewFeed
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
