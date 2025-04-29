@@ -148,7 +148,7 @@ class HeadlinesScreen: Screen {
             },
             content = {innerPadding ->
                 Column(
-                    modifier = Modifier.padding(innerPadding).padding(20.dp)
+                    modifier = Modifier.padding(innerPadding).padding(20.dp).padding(bottom = 50.dp).verticalScroll(scrollState)
                         .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
                             detectTapGestures(
                                 onPress = { /* Optional: Track press state */ },
@@ -229,7 +229,7 @@ class HeadlinesScreen: Screen {
 //here the lazy column will be displayed in a fixed position
                     DisplayArticles(viewmodel = viewModel)
 
-
+                    Spacer(modifier = Modifier.height(40.dp))
                 }
             }
         )

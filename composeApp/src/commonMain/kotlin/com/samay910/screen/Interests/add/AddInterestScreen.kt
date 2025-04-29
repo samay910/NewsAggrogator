@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +27,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Refresh
@@ -66,12 +69,14 @@ import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.samay910.screen.Headlines.HeadlinesViewmodel
 import com.samay910.screen.Headlines.InformationDialog
 import com.samay910.screen.Home.DisplayLinks
 import com.samay910.screen.Home.HomeViewmodel
 import com.samay910.screen.Interests.create_feed_form.CreateFeedFormScreen
+import com.samay910.screen.Interests.create_feed_form.CreateFeedFormViewmodel
 import com.shared.Resources.getLogo
 
 class AddInterestScreen :Screen{
@@ -97,6 +102,9 @@ class AddInterestScreen :Screen{
 
         var interest4 by remember{ mutableStateOf(false) }
         interest4=viewModel.interest4
+
+        var displayRemovedDialog by remember{ mutableStateOf(false) }
+        displayRemovedDialog=viewModel.displayRemove
 
         //        this is required to maintain a smooth experence accross the application
         val focusManager = LocalFocusManager.current
@@ -147,7 +155,7 @@ class AddInterestScreen :Screen{
             },
             content = {innerPadding ->
                 Column(
-                    modifier = Modifier.padding(innerPadding).padding(20.dp)
+                    modifier = Modifier.padding(innerPadding).padding(20.dp).padding(bottom = 50.dp).verticalScroll(scrollState)
                         .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
                             detectTapGestures(
                                 onPress = { /* Optional: Track press state */ },
@@ -162,6 +170,8 @@ class AddInterestScreen :Screen{
                     //Check if a dialog should be displayed
                     if (displayInfo) {
                         InformationDialog(viewmodel = viewModel)
+                    }else if(displayRemovedDialog){
+                        RemovedSuccessDialog(viewmodel = viewModel)
                     }
                     //Area to provide a breif description and acess to the info dialog
                     Row(
@@ -186,186 +196,143 @@ class AddInterestScreen :Screen{
                         }
 
                     }
-
+                    Spacer(modifier = Modifier.height(10.dp))
 //            list of 4 buttons that either link to a generate feed dialog or a saved feed screen
                     LazyColumn(
                         modifier = Modifier.height(600.dp),
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+
                     ) {
-//                4 areas holding the different interest feeds
-                        item {
-//                    check if local interest is stored, else display button for adding interest
-                            Box(
-                                modifier = Modifier.fillMaxWidth(1f).height(150.dp)
-                            ) {
-//                        if there exists a local interest then link to a feed screen
-                                if (interest1) {
-                                    IconButton(
-                                        onClick = {
+                        for (i in 1..4) {
 
+                            item {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    "Saved Feed ${i}: ",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(start = 10.dp)
+                                )
+                                Spacer(modifier = Modifier.height(5.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(1f).height(150.dp)
+                                ) {
+                                    if (i == 1) {
+                                        if (interest1) {
+                                            Box(
+                                                modifier = Modifier.weight(0.5f)
+                                            ){
+                                                ViewFeedButton(viewmodel = viewModel, index = i)
+                                            }
+                                            Spacer(modifier = Modifier.weight(0.01f))
+                                            Box(
+                                                modifier = Modifier.weight(0.4f)
+                                            ){
+                                                DeleteFeed(viewmodel = viewModel, index = i)
+                                            }
 
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                            .border(1.dp, Color.Black)
-                                    ) {
-
-                                    }
-                                } else {
+                                        } else {
 //                            display a creation button for the interest
-                                    IconButton(
-                                        onClick = {
-//                                    open the create dialog
-                                            navigator.push(CreateFeedFormScreen(index = 1))
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(1f),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Add,
-                                                contentDescription = "Add"
-                                            )
-                                            Text("Add Interest")
-                                        }
+                                            Box(
+                                                modifier = Modifier.weight(1f)
+                                            ){
+                                                CreateFeedButton(
+                                                    navigator = navigator,
+                                                    viewmodel = viewModel,
+                                                    index = i
+                                                )
+                                            }
 
+                                        }
+                                    } else if (i == 2) {
+                                        if (interest2) {
+                                            Box(
+                                                modifier = Modifier.weight(0.5f)
+                                            ){
+                                                ViewFeedButton(viewmodel = viewModel, index = i)
+                                            }
+                                            Spacer(modifier = Modifier.weight(0.01f))
+                                            Box(
+                                                modifier = Modifier.weight(0.4f)
+                                            ){
+                                                DeleteFeed(viewmodel = viewModel, index = i)
+                                            }
+
+                                        } else {
+//                            display a creation button for the interest
+                                            Box(
+                                                modifier = Modifier.weight(1f)
+                                            ){
+                                                CreateFeedButton(
+                                                    navigator = navigator,
+                                                    viewmodel = viewModel,
+                                                    index = i
+                                                )
+                                            }
+                                        }
+                                    } else if (i == 3) {
+                                        if (interest3) {
+                                            Box(
+                                                modifier = Modifier.weight(0.5f)
+                                            ){
+                                                ViewFeedButton(viewmodel = viewModel, index = i)
+                                            }
+                                            Spacer(modifier = Modifier.weight(0.01f))
+                                            Box(
+                                                modifier = Modifier.weight(0.4f)
+                                            ){
+                                                DeleteFeed(viewmodel = viewModel, index = i)
+                                            }
+
+                                        } else {
+//                            display a creation button for the interest
+                                            Box(
+                                                modifier = Modifier.weight(1f)
+                                            ){
+                                                CreateFeedButton(
+                                                    navigator = navigator,
+                                                    viewmodel = viewModel,
+                                                    index = i
+                                                )
+                                            }
+                                        }
+                                    } else if (i == 4) {
+                                        if (interest4) {
+                                            Box(
+                                                modifier = Modifier.weight(0.5f)
+                                            ){
+                                                ViewFeedButton(viewmodel = viewModel, index = i)
+                                            }
+                                            Spacer(modifier = Modifier.weight(0.01f))
+                                            Box(
+                                                modifier = Modifier.weight(0.4f)
+                                            ){
+                                                DeleteFeed(viewmodel = viewModel, index = i)
+                                            }
+
+                                        } else {
+//                            display a creation button for the interest
+                                            Box(
+                                                modifier = Modifier.weight(1f)
+                                            ){
+                                                CreateFeedButton(
+                                                    navigator = navigator,
+                                                    viewmodel = viewModel,
+                                                    index = i
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.height(10.dp))
 
                         }
-                        item {
-                            //                    check if local interest is stored, else display button for adding interest
-                            Box(
-                                modifier = Modifier.fillMaxWidth(1f).height(150.dp)
-                            ) {
-//                        if there exists a local interest then link to a feed screen
-                                if (interest2) {
-                                    IconButton(
-                                        onClick = {
 
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                            .border(1.dp, Color.Black)
-                                    ) {
-
-                                    }
-                                } else {
-//                            display a creation button for the interest
-                                    IconButton(
-                                        onClick = {
-
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(1f),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Add,
-                                                contentDescription = "Add"
-                                            )
-                                            Text("Add Interest")
-                                        }
-
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
-                        item {
-                            //                    check if local interest is stored, else display button for adding interest
-                            Box(
-                                modifier = Modifier.fillMaxWidth(1f).height(150.dp)
-                            ) {
-//                        if there exists a local interest then link to a feed screen
-                                if (interest3) {
-                                    IconButton(
-                                        onClick = {
-
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                            .border(1.dp, Color.Black)
-                                    ) {
-
-                                    }
-                                } else {
-//                            display a creation button for the interest
-                                    IconButton(
-                                        onClick = {
-
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(1f),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Add,
-                                                contentDescription = "Add"
-                                            )
-                                            Text("Add Interest")
-                                        }
-
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
-                        item {
-                            //                    check if local interest is stored, else display button for adding interest
-                            Box(
-                                modifier = Modifier.fillMaxWidth(1f).height(150.dp)
-                            ) {
-//                        if there exists a local interest then link to a feed screen
-//                        by default display the
-                                if (interest4) {
-                                    IconButton(
-                                        onClick = {
-
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                            .border(1.dp, Color.Black)
-                                    ) {
-
-                                    }
-                                } else {
-//                            display a creation button for the interest
-                                    IconButton(
-                                        onClick = {
-
-                                        },
-                                        modifier = Modifier.fillMaxSize(1f)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(1f),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.Add,
-                                                contentDescription = "Add"
-                                            )
-                                            Text("Add Interest")
-                                        }
-
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
                     }
-
-
+                    Spacer(modifier = Modifier.height(40.dp))
                 }
             }
         )
-
-
     }
 }
 
@@ -442,9 +409,192 @@ fun InformationDialog(viewmodel: AddInterestViewmodel){
     }
 }
 
+@Composable
+fun CreateFeedButton(navigator: Navigator, viewmodel: AddInterestViewmodel, index:Int){
+    Button(
+        onClick = {
+//                                    open the create dialog
+            navigator.push(CreateFeedFormScreen(index = index))
+        },
+        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
+//        change the shape
+        shape = RoundedCornerShape(5.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.White,
+            contentColor = Color.Black),
+        border = BorderStroke(
+            width = 1.dp, // Set the desired border width
+            color = Color.Black // Set the border color to black
+        )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(1f),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AddCircle,
+                contentDescription = "Add"
+            )
+            Text("Add Interest")
+        }
+    }
+}
+
+
+@Composable
+fun ViewFeedButton(viewmodel: AddInterestViewmodel,index:Int){
+
+    Button(
+        onClick = {
+
+        },
+        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
+//        change the shape
+        shape = RoundedCornerShape(5.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.White,
+            contentColor =Color.Black
+        ),
+        border = BorderStroke(
+            width = 1.dp, // Set the desired border width
+            color = Color.Black // Set the border color to black
+        )
+
+    ) {
+//                                        here display the feed and the option to remove the feed
+        Text("created")
+    }
+}
+
+
+@Composable
+fun DeleteFeed(viewmodel: AddInterestViewmodel,index: Int){
+    val lightRedColor = Color(251,3,3)
+    Button(
+        onClick = {
+            viewmodel.updateSelectedToRemove(index)
+            viewmodel.DeleteFeed()
+        },
+        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
+//        change the shape
+        shape = RoundedCornerShape(5.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = lightRedColor,
+            contentColor = Color.Black
+        )
+    ){
+        Column(
+            modifier = Modifier.fillMaxWidth(1f),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(imageVector = Icons.Outlined.Delete, contentDescription = "Refresh")
+            Text("Delete Feed:")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RemovedSuccessDialog(viewmodel: AddInterestViewmodel){
+    var displayInfo by remember { mutableStateOf(false) }
+    displayInfo = viewmodel.displayRemove
+
+    val loading by viewmodel.loading.collectAsState()
+
+
+    BasicAlertDialog(
+        onDismissRequest = {
+//            this makes it so that if the user clicks outside the box an action is performed
+            viewmodel.updateDisplayInfo(false)
+        }
+    ){
+        Surface(
+            modifier = Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.5f),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            //        esures the coulmn is scrollable
+            val scrollState = rememberScrollState()
 
 
 
+            Column(
+                modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
+            ) {
+//                here is where the summary will be displayed and the other components will be involved
+                Row (
+                    modifier = Modifier.fillMaxWidth(1f),
+                    horizontalArrangement = Arrangement.Start
+                ){
+                    IconButton(
+                        onClick = {
+                            // Define dismiss action & close dialog
+                            println("Dismiss button clicked.") // Optional logging
+                            viewmodel.updateDisplayRemove(false)
+                        },
+                        modifier = Modifier.fillMaxWidth(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+
+                            ) {
+                            Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
+                            Text("Close")
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
+                Row(
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ) {
+//                    check if the network error is null, if not then display the error
+                    Text("Updating local storage: ", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
+
+
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row (
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ){
+                    if(loading){
+                        //                        display a loading icon at the center of the page and message below until complete
+                        Box(modifier = Modifier.fillMaxWidth(1f), contentAlignment = Alignment.Center){
+                            CircularProgressIndicator(modifier = Modifier.fillMaxWidth(0.5f))
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("Removing feed...", color = Color.Gray)
+
+                    }else {
+//                        display success message and a button to return
+                        Column(modifier = Modifier.fillMaxWidth(1f), horizontalAlignment = Alignment.CenterHorizontally){
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Text("Success!")
+//                            image of success icon
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Icon(imageVector = Icons.Outlined.CheckCircle, contentDescription = "Confirm and Save")
+
+
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text("To escape the popup click the button below or close above. ")
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Button(onClick = {
+                                viewmodel.updateDisplayRemove(false)
+                            }) {
+                                Text("Close")
+                            }
+                            Text("Feed Successfully removed! ")
+                        }
+
+                    }
+
+                }
+            }}
+    }
+}
 
 
 

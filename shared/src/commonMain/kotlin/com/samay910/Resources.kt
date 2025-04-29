@@ -27,6 +27,7 @@ object Resources {
     object Basic_Icon{
         val help= Res.drawable.help
         val summary= Res.drawable.ai_summary_button_icon
+
     }
 
     @Composable
@@ -36,6 +37,7 @@ object Resources {
             val myImage: ImageVector = vectorResource(Basic_Icon.summary)
             return myImage
         }
+
         else{
             val myImage: ImageVector = vectorResource(Basic_Icon.help)
             return myImage
@@ -60,6 +62,7 @@ object Resources {
         val logo = painterResource(Res.drawable.important_icon)
         return logo
     }
+
 
 
     @Composable

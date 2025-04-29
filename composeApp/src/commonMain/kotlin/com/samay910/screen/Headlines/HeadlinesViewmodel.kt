@@ -79,7 +79,7 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
     fun GetArticles(){
 //Ensure the prior variables are cleared on additionall click of generate
         if (filteredArticles.isEmpty()==false){
-
+            _articlesLoading.value=false
             updateDisplayWarning(false)
             _newsResponse.value = null
             _networkError.value = null
@@ -107,6 +107,7 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
         screenModelScope.launch {
             ApiResponse(filter)
             if (networkError.value!=null){
+                _articlesLoading.value=false
                 updateDisplayWarning(true)
             }
             else{

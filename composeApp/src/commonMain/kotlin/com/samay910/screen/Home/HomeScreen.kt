@@ -162,7 +162,7 @@ class HomeScreen:Screen{
             },
             content = {innerPadding ->
                 Column(
-                    modifier = Modifier.padding(innerPadding).padding(20.dp).verticalScroll(scrollState)
+                    modifier = Modifier.padding(innerPadding).padding(20.dp).padding(bottom = 50.dp).verticalScroll(scrollState)
                         .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
                         detectTapGestures(
                             onPress = { /* Optional: Track press state */ },
@@ -355,9 +355,8 @@ class HomeScreen:Screen{
                                 }
                             }
                         }
-
-
                     }
+                    Spacer(modifier = Modifier.height(40.dp))
                 }
             }
         )

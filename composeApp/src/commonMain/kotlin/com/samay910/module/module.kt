@@ -30,7 +30,7 @@ expect val platformModule: Module
 fun initKoin(config:(KoinApplication.()->Unit)?=null) {
     startKoin{
         config?.invoke(this)
-        modules(networkModule,platformModule)
+        modules(platformModule,networkModule)
 
     }
 }
