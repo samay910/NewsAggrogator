@@ -123,7 +123,6 @@ android {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-
 sqldelight{
     databases{
         create("InterestDatabase"){
@@ -131,4 +130,8 @@ sqldelight{
         }
     }
 }
+
+
+
+
 

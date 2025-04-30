@@ -105,10 +105,11 @@ class CreateFeedFormViewmodel (
     suspend fun createFeed(){
         localDatabase.saveInterest(
             id = index.toLong(),
-            q = textFilter,
-            topic = category,
-            location = country,
-            source = publisher
+            q =if (textFilter.isEmpty()) "unset" else textFilter,
+
+            topic = if (category.isEmpty()) "unset" else category,
+            location =if (country.isEmpty()) "unset" else country,
+            source =if (publisher.isEmpty()) "unset" else publisher
         )
 //stop loading
         _loading.value = false

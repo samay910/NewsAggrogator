@@ -8,11 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
+import com.samay910.database.local.LocalDatabase
+import com.samay910.database.local.LocalResponse
 import com.samay910.networking.api_clients.news_api.NewsApiClient
 import com.samay910.networking.api_clients.news_api.dto.Article
 import com.samay910.networking.api_clients.news_api.dto.ArticleList
@@ -32,9 +30,64 @@ import util.onError
 import util.onSuccess
 import kotlin.time.Duration.Companion.seconds
 
-class HeadlinesViewmodel(
+class InterestFeedViewmodel(
     private val newsApiClient: NewsApiClient
 ): ScreenModel {
+
+    fun clearAll(){
+
+    }
+//    store the index holding reffrence to interest entry stored locally
+    var interestIndex by mutableStateOf(0)
+
+    var savedFeeds by mutableStateOf(listOf<LocalResponse>())
+
+
+
+    //    get the local response from the database
+    fun GetData(){
+
+
+//        if the data has been loaded already to avoid refreshes
+        if(_newsResponse.value==null){
+            screenModelScope.launch {
+                _articlesLoading.value = true
+                delay(2.seconds)
+                for (i in savedFeeds){
+                    if (i.id.toInt() ==interestIndex){
+                        currentFeed=i
+                    }
+                }
+//            filter the current feed
+                if (currentFeed.topic=="unset"){
+                    currentFeed.topic=""
+                }
+                if (currentFeed.location=="unset"){
+                    currentFeed.location=""}
+                if (currentFeed.q=="unset"){
+                    currentFeed.q=""
+                }
+                if (currentFeed.source=="unset"){
+                    currentFeed.source=""
+                }
+                GetArticles()
+
+            }
+        }
+
+
+
+    }
+
+
+    var currentFeed by mutableStateOf(LocalResponse(
+        id = 0,
+        topic = "",
+        location = "",
+        q = ""
+    ))
+
+
 
     var displayInfo by mutableStateOf(false)
         private set
@@ -42,10 +95,7 @@ class HeadlinesViewmodel(
     fun updateDisplayInfo(input: Boolean) {
         displayInfo = input}
 
-//    the list is built up of some general key words that will hopefully generate a good repersentation of headlines of interest
-    var generalHeadlines = listOf(
-    "outbreak","war","Business", "Technology", "Entertainment", "Sports", "Science", "Health", "Politics", "World", "Environment"
-    )
+
 //managing the user input
     var textFilter by mutableStateOf("")
         private set
@@ -76,34 +126,25 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
 
         displayWarning = input
     }
+
     fun GetArticles(){
 //Ensure the prior variables are cleared on additionall click of generate
-        if (filteredArticles.isEmpty()==false){
-            _articlesLoading.value=false
-            updateDisplayWarning(false)
-            _newsResponse.value = null
-            _networkError.value = null
-            filteredArticles.clear()
-        }
-
 //        first deal with displaying the loading area
         _articlesLoading.value = true
 
 //        then call the api
         val filter = InterestInput(
 //           check if an interest i specified, if not then use the generalised array for general headlines
-            q= if (textFilter=="") {
-                "outbreak OR war OR Business OR Technology OR Entertainment OR Sports OR Science OR Health OR Politics OR World OR Environment"
-            }else{
-              textFilter
-            },
-            category = "",
-            country = "",
-            from = get1DaysBefore() ,
+            q= currentFeed.q,
+            category = currentFeed.topic,
+            country = currentFeed.location,
+            from = get1DaysBefore(),
+//            default will be publiched at
             sortBy = "relevance",
             pageSize = 100,
             page = 1
         )
+
         screenModelScope.launch {
             ApiResponse(filter)
             if (networkError.value!=null){
@@ -111,9 +152,7 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
                 updateDisplayWarning(true)
             }
             else{
-
-                //        copy the results into a normal array
-
+                //copy the results into a normal array
                 FormatResponse()
             }
         }

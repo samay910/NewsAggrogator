@@ -1,17 +1,25 @@
-CREATE TABLE InterestDatabase (
-    id INTEGER PRIMARY KEY NOT NULL,
-    q TEXT,
-    topic TEXT,
-    location TEXT,
-    source TEXT
+CREATE TABLE InterestTable (
+    feedId INTEGER PRIMARY KEY NOT NULL, -- Added PRIMARY KEY
+    q TEXT NOT NULL DEFAULT '',
+    topic TEXT NOT NULL DEFAULT '',
+    location TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL DEFAULT ''
 );
 
-checkFeedExists:
-SELECT EXISTS (SELECT 1 FROM InterestDatabase WHERE id==?);
 
-saveInterest:
-INSERT INTO InterestDatabase(id,q,topic,location,source)
+-- get all the table
+getFeeds:
+SELECT * FROM InterestTable;
+
+-- add to table
+insertFeed: -- Added label
+INSERT INTO InterestTable(feedId,q,topic,location,source)
 VALUES (?,?,?,?,?);
 
-removeSavedInterest:
-DELETE FROM InterestDatabase WHERE id=?;
+-- check if entry exists
+checkFeedExists: -- Added label
+SELECT EXISTS (SELECT 1 FROM InterestTable WHERE feedId=?);
+
+-- delete from table
+deleteFeed: -- Added label
+DELETE FROM InterestTable WHERE feedId=?;

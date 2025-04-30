@@ -1,7 +1,6 @@
 package com.samay910.screen.Home
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,8 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
@@ -57,26 +55,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
-import cafe.adriel.voyager.core.model.rememberNavigatorScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -85,28 +73,26 @@ import com.shared.Resources.getGeminilogo
 import com.shared.Resources.getImageVectorIcon
 import com.shared.Resources.getImportantImage
 import com.shared.Resources.getLogo
-import sh.calvin.autolinktext.TextMatcher
-import sh.calvin.autolinktext.TextRule
-import sh.calvin.autolinktext.TextRule.Url
-import sh.calvin.autolinktext.rememberAutoLinkText
 import util.NetworkError
 
 class HomeScreen:Screen{
     @OptIn(ExperimentalMaterial3Api::class)
-
+//all images and icons within the page are either created for the application or provided by material 3's library
 
     @Composable
     override fun Content(){
+//navigator is provided by voyager library and facilitates both tab and nested tab navigation
         val navigator = LocalNavigator.currentOrThrow
 
-//        this is required to maintain a smooth experence accross the application
+//This manages off click events within the app whilst interacting with different composable
         val focusManager = LocalFocusManager.current
 
-
-//        this ties the scope of the viewmodel to the relative navigation of the tab
-//        when the user changes the tab the viewmodel will be reset
+//this ties the scope of the viewmodel to the relative navigation of the tab
         val viewModel : HomeViewmodel = koinScreenModel()
+//ensures the column is scrollable
+        val scrollState = rememberScrollState()
 
+//this set of variables help manage popups and dialogs managed within the viewmodel
         var displaySummary by remember{mutableStateOf(false)}
         displaySummary=viewModel.displaySummary
 
@@ -116,20 +102,18 @@ class HomeScreen:Screen{
         var displayWarning by remember{mutableStateOf(false)}
         displayWarning=viewModel.displayWarning
 
-//        esures the coulmn is scrollable
-        val scrollState = rememberScrollState()
-
+//scaffold is a composable layout that provides a basic structure for a screen
         Scaffold (
+//this top bar provides return and more options functionality.Primarily used for navigation back within a tab and display of the app logo
             topBar = {
                 CenterAlignedTopAppBar(
                     navigationIcon = {
-                        // --- Conditional Back Button Logic ---
-                        if (navigator.canPop) { // Check if navigator can pop back
+//make return within a tabs navigation stack when possible
+                        if (navigator.canPop) {
                             IconButton(onClick = { navigator.pop() }, modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)) { // Action: pop back
                                 Column (
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
-
                                 ){
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -137,9 +121,9 @@ class HomeScreen:Screen{
                                     )
                                     Text("Back")
                                 }
-
                             }
-                        }else{
+                        }
+                        else{
                             Spacer(modifier = Modifier.fillMaxSize(0.2f))
                         }
                     },
@@ -160,21 +144,27 @@ class HomeScreen:Screen{
 
                 )
             },
+//inner padding required when using scaffold to ensure no conflicts
             content = {innerPadding ->
                 Column(
-                    modifier = Modifier.padding(innerPadding).padding(20.dp).padding(bottom = 50.dp).verticalScroll(scrollState)
-                        .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
-                        detectTapGestures(
-                            onPress = { /* Optional: Track press state */ },
-                            onTap = {
-                                // When tapped, clear focus from the currently focused element
-                                println("Tapped outside TextField - Clearing focus") // Log for confirmation
-                                focusManager.clearFocus()
-                            })}
-
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .padding(20.dp)
+                        .padding(bottom = 50.dp)
+                        .verticalScroll(scrollState)
+                        .pointerInput(Unit){
+                            detectTapGestures(
+                                onPress = {},
+                                onTap = {
+// When tapped, clear focus from the currently focused element
+                                    focusManager.clearFocus()
+                                }
+                            )
+                        }
                 ){
+//logic required to manage dialog display
                     if (displaySummary){
-                        SummaeyDialog(viewmodel = viewModel)
+                        SummaryDialog(viewmodel = viewModel)
                     }
                     else if (displayInfo){
                         InformationDialog(viewmodel = viewModel)
@@ -182,45 +172,43 @@ class HomeScreen:Screen{
                     else if (displayWarning){
                         WarningDialog(viewmodel = viewModel)
                     }
-        //            the initial description and link to the help icon explaining aspects of the app
+
+//Common section amongst screens providing an overview of what the screen offers and interactive button to display a dialog with more details
                     Row {
-                        Box(modifier = Modifier.fillMaxWidth(0.9f)){
-                            Text("Please specify your interest below to generate an AI summary of current news surrounding your interest.\n" +
-                                    "All ")
+                        Box(
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ){
+                            Text("Please specify your interest below to generate an AI summary of current news surrounding your interest.\n" + "All ")
                         }
                         IconButton(
-        //                    display a popup with specification as to how to interact with the screen and what utility is provided
                             onClick = {
-        //                        this will display a simple alert dialog box explaining verbally what the screen offers and how to use it
                                 viewModel.updateDisplayInfo(true)
-                            /* Handle action */
                             }
 
                         ){
-                            Icon(imageVector = Icons.Outlined.Info, contentDescription = "More", modifier = Modifier.fillMaxSize())
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = "More",
+                                modifier = Modifier.fillMaxSize())
                         }
-
-
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-                    Text(
-                            text = "Please set at least one of the below filters: ",
-                    style = TextStyle(fontWeight = FontWeight.Bold)
+                    Text( "Please set at least one of the below filters: ",
+                        style = TextStyle(fontWeight = FontWeight.Bold)
                     )
                     Spacer(modifier = Modifier.height(20.dp))
-        //            text field for specifying interest via text
+
+//text field for specifying interest via text with an interactive icon for clearing the field
                     Row {
-                        //    this is how i can retain the data stored in the viewmodel accross navigations within the app
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(1f),
                             value = viewModel.textFilter,
                             onValueChange = { textFilter -> viewModel.updatetextFilter(textFilter) },
                             label = { Text("Specify interest via text") },
+//clears input
                             trailingIcon = {
-                                IconButton(onClick = {
-        //                            clear the input
-                                    viewModel.updatetextFilter("")
-                                }) {
+                                IconButton(onClick = { viewModel.updatetextFilter("") }
+                                ){
                                     Icon(
                                         imageVector = Icons.Outlined.Clear,
                                         contentDescription = "Send"
@@ -230,32 +218,29 @@ class HomeScreen:Screen{
                         )
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-        //            2 dropdown menus for category and country
-                    Row {
 
+//2 dropdown menus for category and country
+                    Row {
                         Box(modifier = Modifier.weight(0.4f)){
                             DropdownMenus(viewmodel = viewModel,type = "category")
                         }
                         Spacer(modifier = Modifier.weight(0.1f))
-
                         Box(modifier = Modifier.weight(0.4f)){
                             DropdownMenus(viewmodel = viewModel,type = "country")
                         }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-        //            text feild for specifying news publisher by name
+
+//text field for specifying news publisher by name
                     Row {
-                        //    this is how i can retain the data stored in the viewmodel accross navigations within the app
                         OutlinedTextField(
                             modifier = Modifier.fillMaxWidth(1f),
                             value = viewModel.publisher,
                             onValueChange = { publisher -> viewModel.updatePublisher(publisher) },
                             label = { Text("Specify news publisher") },
                             trailingIcon = {
-                                IconButton(onClick = {
-        //                            clear the input
-                                    viewModel.updatePublisher("")
-                                }) {
+                                IconButton(onClick = { viewModel.updatePublisher("") }
+                                ){
                                     Icon(
                                         imageVector = Icons.Outlined.Clear,
                                         contentDescription = "Send"
@@ -266,60 +251,53 @@ class HomeScreen:Screen{
                     }
                     Spacer(modifier = Modifier.height(20.dp))
 
-        //            associative form buttons, including clear,generate and view summary
+//associative form buttons, including clear,generate and view summary
                     Row(
-                        modifier = Modifier
-                            .fillMaxHeight(0.3f))
-                    {
-        //                clear button
+                        modifier = Modifier.fillMaxHeight(0.3f)
+                    ){
+//clear button
                         Box(
-                           modifier = Modifier.weight(0.3f)
-                                ){
+                            modifier = Modifier.weight(0.3f)
+                        ){
                             ClearButton(viewmodel = viewModel)
                         }
-
                         Spacer(modifier = Modifier.weight(0.01f))
-        //                generate button
+
+//generate button
                         Box(
                             modifier = Modifier.weight(0.4f)
                         ){
                             GenerateButton(viewmodel = viewModel)
                         }
-
                         Spacer(modifier = Modifier.weight(0.01f))
-        //                view summary button
-        //                summary button implementation is here for easier management of if the view is available or not
+
+//view summary button
                         Box(
                             modifier = Modifier.weight(0.4f)
                         ){
                             ViewSummaryButton(viewmodel = viewModel)
                         }
-
-
                     }
                     Spacer(modifier = Modifier.height(20.dp))
 
-        //            Additional warning section to emphisise usage of Gemini to provide the AI response
+//Additional warning section to emphasise usage of Gemini to provide the AI response
                     Row(
                         modifier = Modifier
                             .fillMaxWidth(1f)
                             .height(150.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
-
-                    ) {
-        //                info section clarifying how the AI summary is generated
+                    ){
                         Column{
                             OutlinedCard(
-                                modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth(1f)
+                                    .fillMaxHeight(1f),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface,),
                                 border = BorderStroke(1.dp, androidx.compose.ui.graphics.Color.Black),
                             ) {
                                 Column (
                                     modifier = Modifier.padding(10.dp).fillMaxWidth(1f)
-
                                 ){
                                     Row{
                                         Image(
@@ -332,22 +310,20 @@ class HomeScreen:Screen{
                                         Spacer(modifier = Modifier.width(10.dp))
 
                                         Box(
-                                            modifier = Modifier.fillMaxWidth(0.8f)){
-                                            Text("As you may have realized, our summaries are powered by Googles ")
+                                            modifier = Modifier.fillMaxWidth()){
+                                            Text("All articles displayed across the application are found using Newsapi.org and their great services, our summaries are also powered by Googles ")
                                         }
                                     }
-
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(1f),
-                                        horizontalArrangement = Arrangement.End
+                                        horizontalArrangement = Arrangement.Center
                                     ) {
-
                                         Image(
                                             painter = getGeminilogo(),
                                             contentDescription = "App Logo", // Provide a meaningful description
                                             // Add modifiers as needed (e.g., size)
-                                            modifier = Modifier.fillMaxWidth(0.6f),
+                                            modifier = Modifier.fillMaxWidth(0.4f),
                                             contentScale = ContentScale.Crop
 
                                         )
@@ -356,19 +332,19 @@ class HomeScreen:Screen{
                             }
                         }
                     }
+//added to avoid conflict with bottom nav bar
                     Spacer(modifier = Modifier.height(40.dp))
                 }
             }
         )
-
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class) // Required for ExposedDropdownMenuBox
+//below are separated composable that are used within the screen and dialogs used for popups
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun DropdownMenus(viewmodel: HomeViewmodel,type:String) {
-
+//as the function is used for both dropdowns this ensures the correct variable is used
     var selectedOptionText by remember { mutableStateOf(
         if(type=="category"){
             viewmodel.category
@@ -378,12 +354,13 @@ fun DropdownMenus(viewmodel: HomeViewmodel,type:String) {
         }
     ) }
     val categoryMenuItemData = listOf("business", "entertainment", "general", "health", "science", "sports", "technology")
-//    Prioritise more larger countries that are more relavant to the average user, as all the inputs are added to the parameters, a more specific region can be specified by the text feild
+//Prioritise more larger countries that are more relevant to the average user, as all the inputs are added to the parameters, a more specific region can be specified by the text feild
     val countryMenuItemData = listOf(
        "Australia", "Brazil", "Canada", "China",
         "France", "Germany", "India", "Israel",
         "Italy", "Japan",  "Mexico", "Pakistan", "Russia", "United Arab Emirates", "United Kingdom",
         "United States")
+
     var expanded by remember { mutableStateOf(false) }
     val options :List<String>
     val label:String
@@ -396,7 +373,6 @@ fun DropdownMenus(viewmodel: HomeViewmodel,type:String) {
         options=countryMenuItemData
         label="country"
     }
-
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
@@ -426,9 +402,8 @@ fun DropdownMenus(viewmodel: HomeViewmodel,type:String) {
             options.forEach { selectionOption ->
                 DropdownMenuItem(
                     text = {
-//                        if reset is called this will change
+//if reset is called this will change to default
                         Text(selectionOption)
-
                            },
                     onClick = {
                         if(type=="category"){
@@ -437,7 +412,6 @@ fun DropdownMenus(viewmodel: HomeViewmodel,type:String) {
                         else{
                             viewmodel.updatecountry(selectionOption)
                         }
-
                         selectedOptionText = selectionOption
                         expanded = false
                     },
@@ -451,16 +425,16 @@ fun DropdownMenus(viewmodel: HomeViewmodel,type:String) {
 
 @Composable
 fun ClearButton(viewmodel: HomeViewmodel){
-//    specify the button colors
+//specify the button colors
     val lightRedColor = Color(251,3,3)
 
     Button(
         onClick = {
-            // Action for the button
+// Action for the button
             viewmodel.clearAll()
         },
-        modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
-//        change the shape
+        modifier = Modifier.fillMaxWidth(1f)
+            .fillMaxHeight(1f),
         shape = RoundedCornerShape(5.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = lightRedColor,
@@ -468,7 +442,7 @@ fun ClearButton(viewmodel: HomeViewmodel){
         )
     ){
         Column(
-            // Center the icon and text horizontally within the column
+// Center the icon and text horizontally within the column
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(imageVector = Icons.Outlined.Delete, contentDescription = "Clear") // Or null if Text describes action
@@ -480,27 +454,23 @@ fun ClearButton(viewmodel: HomeViewmodel){
 @Composable
 fun GenerateButton(viewmodel: HomeViewmodel){
     //    specify the button colors
-    val lightRedColor = Color(90,216,204)
+    val lightBlue = Color(90,216,204)
 
     Button(
         onClick = {
-            // Action for the button
-            //to implement API call
+//implement api call within viewmodel
             viewmodel.updateSummaryGenerating(true)
-//            here add a check empty field
-
         },
         modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
-//        change the shape
         shape = RoundedCornerShape(5.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = lightRedColor,
-            contentColor = androidx.compose.ui.graphics.Color.Black
+            containerColor = lightBlue,
+            contentColor = Color.Black
         )
     ){
         Column(
             modifier = Modifier.fillMaxHeight(1f),
-            // Center the icon and text horizontally within the column
+// Center the icon and text horizontally within the column
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(imageVector = Icons.Outlined.Refresh, contentDescription = "Generate") // Or null if Text describes action
@@ -509,25 +479,21 @@ fun GenerateButton(viewmodel: HomeViewmodel){
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewSummaryButton(viewmodel: HomeViewmodel){
-    // 1. State to control if the button is enabled
+//Manage if the button is clickable or not
     var isButtonEnabled by remember { mutableStateOf(false) }
     isButtonEnabled = viewmodel.summaryGenerating
-
-
-        // The Button itself
         Button(
             modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
             onClick = {
 //if it is enabled display the dialog box with the summary
                 viewmodel.updateDisplaySummary(true)
             },
-            // 2. Control clickability using the state variable
             enabled = isButtonEnabled
         ) {
-            Row( // Row ensures icon and text are horizontally aligned within the button scope
+            Row(
+// Row ensures icon and text are horizontally aligned within the button scope
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Leading Icon
@@ -536,8 +502,6 @@ fun ViewSummaryButton(viewmodel: HomeViewmodel){
                     imageVector = getImageVectorIcon("summary"),
                     contentDescription = "Summary",
                 )
-
-                // Spacer between icon and text
                 Spacer(Modifier.width(0.5.dp)) // Standard Material spacing
 
                 // Button Text
@@ -549,44 +513,43 @@ fun ViewSummaryButton(viewmodel: HomeViewmodel){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SummaeyDialog(viewmodel: HomeViewmodel) {
-    var displaySummary by remember { mutableStateOf(false) }
+fun SummaryDialog(viewmodel: HomeViewmodel) {
 
-    //        this is a variable used to monitor status of API call progression and allow fo displaying of loading bar
+    var displaySummary by remember { mutableStateOf(false) }
+//variables required to ensure the ui reflects the state of the api calls and what stage in the process the applicaiton is at
     val loadingArticles by viewmodel.articlesLoading.collectAsState()
-//    variable to store flow state for summary generation
+//variable to store flow state for summary generation
     val loadingSummary by viewmodel.summaryLoading.collectAsState()
-//    keep track of if a netowrk error has occured
+//keep track of if a netowrk error has occured
     val networkError by viewmodel.networkError.collectAsState()
 
+//this will change dependent on if all filters specified could be applied to the summary
     var notice by remember { mutableStateOf("") }
     notice=viewmodel.notice
 
     displaySummary = viewmodel.displaySummary
 
     BasicAlertDialog(
-        onDismissRequest = {
-//            this makes it so that if the user clicks outside the box an action is performed
-            //viewmodel.updateDisplaySummary(false)
-        }
-        ,properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-    ), modifier = Modifier.fillMaxSize(0.85f)
+//this makes it so that if the user clicks outside the box an action is performed
+        onDismissRequest = {},
+        properties = DialogProperties(usePlatformDefaultWidth = false,
+            ),
+        modifier = Modifier.fillMaxSize(0.85f)
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(1f),
             shape = RoundedCornerShape(8.dp)
         ) {
-            //        esures the coulmn is scrollable
             val scrollState = rememberScrollState()
 
             Column(
                 modifier = Modifier.padding(10.dp).verticalScroll(scrollState)
             ) {
-//                here is where the summary will be displayed and the other components will be involved
+//here is where the summary will be displayed and the other components will be involved
+//close button which is reused on different dialogs
                 Row (
                     modifier = Modifier.fillMaxWidth(1f),
-//cancel button
+
                 ){
                     IconButton(
                         onClick = {
@@ -606,63 +569,88 @@ fun SummaeyDialog(viewmodel: HomeViewmodel) {
                     }
 
                 }
+
+//here different components will be displayed at different stages of the generation process
                 Spacer(modifier = Modifier.height(10.dp))
-//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
+//this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
                 Row(
-                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                    modifier = Modifier.fillMaxWidth(1f),
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Text("Summary:", fontWeight = FontWeight.Bold, fontSize = 20.sp)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Column(
-                    modifier = Modifier.fillMaxWidth(1f),horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.fillMaxWidth(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-//                   while the NewsAPI is being called
-//                    flow is get news articles, if error occurs cacel summary generation, else genrate AI summary, if error occurs then, display error
-                    if (loadingArticles){
-                        Box(modifier = Modifier.fillMaxWidth(0.2f)){
+//flow is get news articles, if error occurs cancel summary generation, else generate AI summary, if error occurs then, display error
+                    if (loadingArticles) {
+                        Box(modifier = Modifier.fillMaxWidth(0.2f)) {
                             CircularProgressIndicator(modifier = Modifier.fillMaxWidth(1f))
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(100.dp))
                         Text("Getting articles...", color = Color.Gray)
 //                        if the article results is unsuccessful display the warning popup with error message
-                        if (networkError!=null){
+                        if (networkError != null) {
 //                            stop displaying this dialog box and all canceling of requests is handeled in the viewmodel
                             viewmodel.updateDisplaySummary(false)
                         }
 //                        ensures that this will not run if there is an error
-                        else if (loadingSummary){
+                        else {
+//                            display articles found:
+                            Column(
+                                modifier = Modifier.fillMaxWidth(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Spacer(modifier = Modifier.height(10.dp))
+//                            image of success icon
 
-                            Box(modifier = Modifier.fillMaxWidth(0.2f)){
-                                CircularProgressIndicator(modifier = Modifier.fillMaxWidth(1f))
+                                Icon(
+                                    imageVector = Icons.Outlined.CheckCircle,
+                                    contentDescription = "Confirm and Save"
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text("Success! Articles found")
+
+                                Spacer(modifier = Modifier.height(10.dp))
                             }
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Text("Generating Summary now...", color = Color.Gray)
                         }
                     }
-//                    what happens after article data is loads
-//                    here the results will be displayed
+//now on the generating summary portion
+                    if (loadingSummary){
+                        Box(modifier = Modifier.fillMaxWidth(0.2f)){
+                            CircularProgressIndicator(modifier = Modifier.fillMaxWidth(1f))
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("Generating Summary now...", color = Color.Gray)
+                    }
+
+
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-//
+
                 Column(
                     modifier = Modifier.fillMaxWidth(1f)
                 ) {
-                    Text("NOTE: "+notice, fontSize = 10.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
-
-                Spacer(modifier = Modifier.height(10.dp))
-
+                    Text("NOTE: "+ notice, fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(color = Color.Red)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+//where the summary will be displayed
                     OutlinedCard(
                         modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface,
                         ),
-                        border = BorderStroke(1.dp, androidx.compose.ui.graphics.Color.Black),
+                        border = BorderStroke(1.dp,Color.Black),
                     ) {
                         Column (
                             modifier = Modifier.padding(10.dp).fillMaxWidth(1f)
                         ){
+//manage what is displayed while summary is generating
                             (if(loadingSummary||loadingArticles) {
                                 Text("summary will appear here...")
                             } else{
@@ -671,7 +659,7 @@ fun SummaeyDialog(viewmodel: HomeViewmodel) {
                         }
                     }
 //here i will display the links
-//below will be a refrence to all the articles included in the summary
+//below will be a reference to all the articles included in the summary
                     Spacer(modifier = Modifier.height(10.dp))
                     Text("References:")
                     Spacer(modifier = Modifier.height(10.dp))
@@ -679,11 +667,8 @@ fun SummaeyDialog(viewmodel: HomeViewmodel) {
                         Text("Title", fontWeight = FontWeight.Bold,modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
                         Spacer(modifier = Modifier.weight(0.2f))
                         Text("URL", fontWeight = FontWeight.Bold,modifier = Modifier.weight(1f),textAlign = TextAlign.Center)
-
                     }
                    DisplayLinks(viewmodel = viewmodel)
-
-
                 }
             }
         }
@@ -696,14 +681,12 @@ fun DisplayLinks(viewmodel: HomeViewmodel){
     val summary by viewmodel.geminiResponse.collectAsState()
     val uriHandler = LocalUriHandler.current
     if (summary?.text.isNullOrEmpty()){
-        Text("Links will appear here...")
+        Text("Links will appear below the summary...")
     }else{
 //        lazy column requires fixed height constraints to function
-       LazyColumn(
-           modifier = Modifier.height(200.dp)
-       ){
-           items(viewmodel.filteredArticles){
-//               display links
+
+           for(it in viewmodel.filteredArticles){
+               //               display links
                Row (modifier = Modifier.fillMaxWidth(1f), verticalAlignment = Alignment.CenterVertically){
                    Box(modifier = Modifier.weight(0.3f),contentAlignment = Alignment.TopStart){
                        Text(".", modifier = Modifier,fontSize = 100.sp)
@@ -719,10 +702,10 @@ fun DisplayLinks(viewmodel: HomeViewmodel){
                    }
                }
                Spacer(modifier = Modifier.height(10.dp))
-           }
-       }
+
 //        function in viewmodel to loop through filtered articles and display the results
     }
+}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -733,32 +716,32 @@ fun InformationDialog(viewmodel: HomeViewmodel){
     displayInfo = viewmodel.displayInfo
     BasicAlertDialog(
         onDismissRequest = {
-//            this makes it so that if the user clicks outside the box an action is performed
+//this makes it so that if the user clicks outside the box an action is performed
             viewmodel.updateDisplayInfo(false)
         }
     ){
         Surface(
-            modifier = Modifier.fillMaxSize(0.8f),
+            modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(0.5f),
             shape = RoundedCornerShape(8.dp)
         ) {
-            //        esures the coulmn is scrollable
+//ensures the column is scrollable
             val scrollState = rememberScrollState()
 
             Column(
                 modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
             ) {
-//                here is where the summary will be displayed and the other components will be involved
+//close button which is reused on different dialogs
                 Row (
                     modifier = Modifier.fillMaxWidth(1f),
-                    horizontalArrangement = Arrangement.Start
-                ){
+
+                    ){
                     IconButton(
                         onClick = {
                             // Define dismiss action & close dialog
                             println("Dismiss button clicked.") // Optional logging
                             viewmodel.updateDisplayInfo(false)
                         },
-                        modifier = Modifier.fillMaxWidth(1f)
+                        modifier = Modifier.fillMaxWidth(0.3f)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -768,6 +751,7 @@ fun InformationDialog(viewmodel: HomeViewmodel){
                             Text("Close")
                         }
                     }
+
                 }
                 Spacer(modifier = Modifier.height(10.dp))
 //                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
@@ -777,20 +761,21 @@ fun InformationDialog(viewmodel: HomeViewmodel){
 //                    check if the network error is null, if not then display the error
                     Text("Info: ", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
 
-
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row (
                     modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
                 ){
-                    Text("Here you will be able to generate a AI summary of the latest headlines related to an inteest of yours." +
-                            "Simply add to the filter specifying a keyword or use the preset dropdown menues to better suport the filter used when " +
-                            "gatherig relavant articles regarding your interest." +
+                    Text("Here you will be able to generate a AI summary of the latest headlines related to an interest of yours." +
+                            "Simply add to the filter specifying a keyword or use the preset dropdown menus to better support the filter used when " +
+                            "gathering relevant articles regarding your interest." +
                             "All article data used within the summary is sourced from newsapi.org services.You can also provide a specific domain.Simply enter" +
-                            "a name correlating to a news orginisation/source you trust and we will try to best prioritise articles from that source in the generated summary where possible" +
+                            "a name correlating to a news organisation/source you trust and we will try to best prioritise articles from that source in the generated summary where possible" +
                             "Once you have applied the desired filters simply select generate and the summary will be generated.To view the generated " +
-                            "summary simply click view summary. The summary genrated is through the usage of googles Gemini LLM.It is fed relavant article data and " +
-                            "summarieses it.Below the summary is a reffrence to the origional article that you can click on to view the full article."
+                            "summary simply click view summary. The summary generated is through the usage of googles Gemini LLM.It is fed relevant article data and " +
+                            "summaries it.Below the summary is a reference to the original article that you can click on to view the full article." +
+                            "In summary, add filters to our search for articles you would be interested in, from the found articles an AI generated summary will be provided.Below the summary all the articles found are sourced " +
+                            "and there links are provided"
                     )
                 }
             }}}
@@ -812,7 +797,7 @@ fun WarningDialog(viewmodel: HomeViewmodel){
         }
     ) {
         Surface(
-            modifier = Modifier.fillMaxSize(0.8f),
+            modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(0.5f),
             shape = RoundedCornerShape(8.dp)
         ) {
             //        esures the coulmn is scrollable
@@ -821,18 +806,18 @@ fun WarningDialog(viewmodel: HomeViewmodel){
             Column(
                 modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
             ) {
-//                here is where the summary will be displayed and the other components will be involved
+//close button which is reused on different dialogs
                 Row (
                     modifier = Modifier.fillMaxWidth(1f),
-                    horizontalArrangement = Arrangement.Start
-                ){
+
+                    ){
                     IconButton(
                         onClick = {
                             // Define dismiss action & close dialog
                             println("Dismiss button clicked.") // Optional logging
                             viewmodel.updateDisplayWarning(false)
                         },
-                        modifier = Modifier.fillMaxWidth(1f)
+                        modifier = Modifier.fillMaxWidth(0.3f)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -842,6 +827,7 @@ fun WarningDialog(viewmodel: HomeViewmodel){
                             Text("Close")
                         }
                     }
+
                 }
                 Spacer(modifier = Modifier.height(10.dp))
 //                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
@@ -851,12 +837,10 @@ fun WarningDialog(viewmodel: HomeViewmodel){
 //                    check if the network error is null, if not then display the error
                     if(networkError!=null){
                         Text("Network Error has occurred : $networkError", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
-
                     }
                     else{
                         Text("Warning:", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
                     }
-
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row (
@@ -872,10 +856,11 @@ fun WarningDialog(viewmodel: HomeViewmodel){
                             Text("Serialization error, please try again later", fontSize = 15.sp, style = TextStyle(color = Color.Red))
                         }
                         else if (networkError== NetworkError.UNKNOWN || networkError== NetworkError.BAD_REQUEST){
-                            Text("The text filter added has led to an issue, please try a different text", fontSize = 15.sp, style = TextStyle(color = Color.Red))
+                            Text("The text filter added has led to an issue, please try a different set of filters", fontSize = 15.sp, style = TextStyle(color = Color.Red))
                         }
-
-
+                        else{
+                            Text("An error has occurred with the services used to generating the summary, please try again later", fontSize = 15.sp, style = TextStyle(color = Color.Red))
+                        }
                     }
                     else{
                     Text("Please add at least one of the filters to generate a summary(excluding domain)", fontSize = 15.sp, style = TextStyle(color = Color.Red))

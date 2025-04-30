@@ -20,8 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedTextField
@@ -31,7 +29,6 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Refresh
@@ -46,7 +43,6 @@ import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,10 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -72,20 +64,29 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.samay910.networking.api_clients.news_api.dto.Article
 import util.NetworkError
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.DialogProperties
+import com.samay910.database.local.LocalResponse
 import com.shared.Resources.getLogo
 import kotlin.math.abs
 
-class HeadlinesScreen: Screen {
+class InterestFeedScreen(val indexRef:Int,val savedFeeds: List<LocalResponse>): Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
 //Create the viewmodel for the headlines screen
-        val viewModel : HeadlinesViewmodel = koinScreenModel()
+        val viewModel : InterestFeedViewmodel = koinScreenModel()
+
+//        get data from the local database
+
+        viewModel.interestIndex=indexRef
+
+        viewModel.savedFeeds=savedFeeds
+
+//        set the loading state to true to display the loading composable
+        viewModel.GetData()
+
 
 //Required reffreence to navigator to manage transitions
         val navigator = LocalNavigator.currentOrThrow
@@ -105,6 +106,20 @@ class HeadlinesScreen: Screen {
         var displayArticle by remember{mutableStateOf(false)}
         displayArticle=viewModel.displayArticle
 
+        var filtersApplied:String=""
+
+        if (viewModel.currentFeed.topic!="unset"&&viewModel.currentFeed.topic!=""){
+            filtersApplied+=" +${viewModel.currentFeed.topic}"
+        }
+        if (viewModel.currentFeed.location!="unset"&&viewModel.currentFeed.location!=""){
+            filtersApplied+=" +${viewModel.currentFeed.location}"
+        }
+        if (viewModel.currentFeed.q!="unset"&&viewModel.currentFeed.q!=""){
+            filtersApplied+=" +${viewModel.currentFeed.q}"
+        }
+
+
+
 //Ensures the column is scrollable
         val scrollState = rememberScrollState()
         Scaffold (
@@ -113,7 +128,10 @@ class HeadlinesScreen: Screen {
                     navigationIcon = {
                         // --- Conditional Back Button Logic ---
                         if (navigator.canPop) { // Check if navigator can pop back
-                            IconButton(onClick = { navigator.pop() }, modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)) { // Action: pop back
+                            IconButton(onClick = {
+//                                clear all variables
+                                navigator.pop()
+                                                 }, modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)) { // Action: pop back
                                 Column (
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
@@ -176,7 +194,8 @@ class HeadlinesScreen: Screen {
 
                     ) {
                         Box(modifier = Modifier.fillMaxWidth(0.9f)) {
-                            Text("Below please specify any text that will help provide the latest headlines more relavant to you, if you want genral headlines just click generate")
+                            Text("Below is the feed created based on your saved interest.All articles below where found using the Newsapi.org service." +
+                                    "simply click any article below and you can view it better ")
                         }
                         IconButton(
 //display a popup with specification as to how to interact with the screen and what utility is provided
@@ -200,29 +219,26 @@ class HeadlinesScreen: Screen {
                         modifier = Modifier.fillMaxWidth(1f),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+//                        change this section to highlight the specific saved filters applied 
                         //    this is how i can retain the data stored in the viewmodel accross navigations within the app
-                        OutlinedTextField(
-                            modifier = Modifier.weight(0.6f),
-                            value = viewModel.textFilter,
-                            onValueChange = { textFilter -> viewModel.updatetextFilter(textFilter) },
-                            label = { Text("Enter text to filter headlines") },
-                            trailingIcon = {
-                                IconButton(onClick = {
-//                            clear the input
-                                    viewModel.updatetextFilter("")
-                                }) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Clear,
-                                        contentDescription = "Send"
-                                    )
-                                }
+                        Column(
+                            modifier = Modifier.weight(0.5f)
+                        ){
+                            Text("Filters applied: ")
+                            Text(filtersApplied)
+                            if (viewModel.currentFeed.source!="unset"||viewModel.currentFeed.source==""){
+                                Text("+ Source = All sources")
+                            }else{
+                                Text("+ Source = ${viewModel.currentFeed.source}")
                             }
-                        )
+
+                        }
                         Spacer(modifier = Modifier.weight(0.05f))
 //                Button used to generate the summary
                         Box(
                             modifier = Modifier.weight(0.35f)
                         ) {
+//                            refresh button
                             GenerateButton(viewmodel = viewModel)
                         }
                     }
@@ -237,80 +253,9 @@ class HeadlinesScreen: Screen {
         )
     }
 }
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-//Here i provide a discription of what the screen offers and how to use it
-fun InformationDialog(viewmodel: HeadlinesViewmodel){
-//        potentially add images
-        var displayInfo by remember { mutableStateOf(false) }
-        displayInfo = viewmodel.displayInfo
-        BasicAlertDialog(
-            onDismissRequest = {
-//            this makes it so that if the user clicks outside the box an action is performed
-                viewmodel.updateDisplayInfo(false)
-            }
-        ){
-            Surface(
-                modifier = Modifier.fillMaxSize(0.8f),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                //        esures the coulmn is scrollable
-                val scrollState = rememberScrollState()
-
-                Column(
-                    modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
-                ) {
-//                here is where the summary will be displayed and the other components will be involved
-                    Row (
-                        modifier = Modifier.fillMaxWidth(1f),
-                        horizontalArrangement = Arrangement.Start
-                    ){
-                        IconButton(
-                            onClick = {
-                                // Define dismiss action & close dialog
-                                println("Dismiss button clicked.") // Optional logging
-                                viewmodel.updateDisplayInfo(false)
-                            },
-                            modifier = Modifier.fillMaxWidth(1f)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-
-                                ) {
-                                Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
-                                Text("Close")
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
-                    Row(
-                        modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
-                    ) {
-//                    check if the network error is null, if not then display the error
-                        Text("Info: ", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
-
-
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row (
-                        modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
-                    ){
-                        Text("Here you will be able to generate a AI summary of the latest headlines related to an inteest of yours." +
-                                "Simply add to the filter specifying a keyword or use the preset dropdown menues to better suport the filter used when " +
-                                "gatherig relavant articles regarding your interest." +
-                                "All article data used within the summary is sourced from newsapi.org services.You can also provide a specific domain.Simply enter" +
-                                "a name correlating to a news orginisation/source you trust and we will try to best prioritise articles from that source in the generated summary where possible" +
-                                "Once you have applied the desired filters simply select generate and the summary will be generated.To view the generated " +
-                                "summary simply click view summary. The summary genrated is through the usage of googles Gemini LLM.It is fed relavant article data and " +
-                                "summarieses it.Below the summary is a reffrence to the origional article that you can click on to view the full article."
-                        )
-                    }
-                }}}
-    }
 
 @Composable
-fun GenerateButton(viewmodel: HeadlinesViewmodel){
+fun GenerateButton(viewmodel: InterestFeedViewmodel){
     //    specify the button colors
     val lightRedColor = Color(90,216,204)
 
@@ -341,7 +286,7 @@ fun GenerateButton(viewmodel: HeadlinesViewmodel){
 }
 
 @Composable
-fun DisplayArticles(viewmodel: HeadlinesViewmodel){
+fun DisplayArticles(viewmodel: InterestFeedViewmodel){
     val loading by viewmodel.articlesLoading.collectAsState()
     var articles by remember { mutableStateOf(listOf<Article>()) }
     articles = viewmodel.filteredArticles
@@ -349,7 +294,7 @@ fun DisplayArticles(viewmodel: HeadlinesViewmodel){
 
 
     Row (modifier = Modifier.fillMaxWidth(1f),horizontalArrangement = Arrangement.Center){
-            Text("Results:", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text("Articles Found:", fontSize = 20.sp, fontWeight = FontWeight.Bold)
     }
     Spacer(modifier = Modifier.height(10.dp))
     if (loading){
@@ -357,10 +302,13 @@ fun DisplayArticles(viewmodel: HeadlinesViewmodel){
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ){
+            Box(modifier = Modifier.fillMaxWidth(0.2f)){
+                CircularProgressIndicator(modifier = Modifier.fillMaxWidth(1f))
+            }
 
-            CircularProgressIndicator(modifier = Modifier.fillMaxSize(0.2f))
-            Spacer(modifier = Modifier.height(10.dp))
-            Text("Loading articles...")
+            Spacer(modifier = Modifier.height(100.dp))
+            Text("Getting articles...", color = Color.Gray)
+
         }
     }
     else{
@@ -431,10 +379,89 @@ fun DisplayArticles(viewmodel: HeadlinesViewmodel){
 //        function in viewmodel to loop through filtered articles and display the results
 
 
+
+
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+//Here i provide a discription of what the screen offers and how to use it
+fun InformationDialog(viewmodel: InterestFeedViewmodel){
+//        potentially add images
+    var displayInfo by remember { mutableStateOf(false) }
+    displayInfo = viewmodel.displayInfo
+    BasicAlertDialog(
+        onDismissRequest = {
+//            this makes it so that if the user clicks outside the box an action is performed
+            viewmodel.updateDisplayInfo(false)
+        }
+    ){
+        Surface(
+            modifier = Modifier.fillMaxSize(0.8f),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            //        esures the coulmn is scrollable
+            val scrollState = rememberScrollState()
+
+            Column(
+                modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
+            ) {
+//                here is where the summary will be displayed and the other components will be involved
+                Row (
+                    modifier = Modifier.fillMaxWidth(1f),
+                    horizontalArrangement = Arrangement.Start
+                ){
+                    IconButton(
+                        onClick = {
+                            // Define dismiss action & close dialog
+                            println("Dismiss button clicked.") // Optional logging
+                            viewmodel.updateDisplayInfo(false)
+                        },
+                        modifier = Modifier.fillMaxWidth(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+
+                            ) {
+                            Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
+                            Text("Close")
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
+                Row(
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ) {
+//                    check if the network error is null, if not then display the error
+                    Text("Info: ", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
+
+
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row (
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ){
+                    Text("Here you will be able to generate a AI summary of the latest headlines related to an inteest of yours." +
+                            "Simply add to the filter specifying a keyword or use the preset dropdown menues to better suport the filter used when " +
+                            "gatherig relavant articles regarding your interest." +
+                            "All article data used within the summary is sourced from newsapi.org services.You can also provide a specific domain.Simply enter" +
+                            "a name correlating to a news orginisation/source you trust and we will try to best prioritise articles from that source in the generated summary where possible" +
+                            "Once you have applied the desired filters simply select generate and the summary will be generated.To view the generated " +
+                            "summary simply click view summary. The summary genrated is through the usage of googles Gemini LLM.It is fed relavant article data and " +
+                            "summarieses it.Below the summary is a reffrence to the origional article that you can click on to view the full article."
+                    )
+                }
+            }}}
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 //here i must specify that the domain input requires for the website
-fun WarningDialog(viewmodel: HeadlinesViewmodel){
+fun WarningDialog(viewmodel: InterestFeedViewmodel){
     var displayWarning by remember { mutableStateOf(false) }
     //    keep track of if a netowrk error has occured
     val networkError by viewmodel.networkError.collectAsState()
@@ -522,7 +549,7 @@ fun WarningDialog(viewmodel: HeadlinesViewmodel){
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 //here i must specify that the domain input requires for the website
-fun ArticleDetailsDialog(viewmodel: HeadlinesViewmodel){
+fun ArticleDetailsDialog(viewmodel: InterestFeedViewmodel){
 //    handel link click
     val uriHandler = LocalUriHandler.current
 

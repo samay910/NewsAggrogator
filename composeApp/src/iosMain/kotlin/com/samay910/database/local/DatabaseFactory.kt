@@ -10,7 +10,7 @@ class IOSDatabaseDriverFactory(): DatabaseFactoryDriver {
     override fun createDriver(): SqlDriver {
         return NativeSqliteDriver(
             schema = InterestDatabase.Schema,
-            name = "InterestDatabase.db"
+            name = "feed.db"
 
         )
     }

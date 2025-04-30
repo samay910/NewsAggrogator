@@ -12,7 +12,7 @@ class AndroidDatabaseDriverFactory(
         return AndroidSqliteDriver(
             schema = InterestDatabase.Schema,
             context = context,
-            name = "InterestDatabase.db"
+            name = "feeds.db"
 
         )
     }

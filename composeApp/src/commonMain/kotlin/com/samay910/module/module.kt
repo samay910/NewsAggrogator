@@ -6,6 +6,7 @@ import com.samay910.screen.Headlines.HeadlinesViewmodel
 import com.samay910.screen.Home.HomeViewmodel
 import com.samay910.screen.Interests.add.AddInterestViewmodel
 import com.samay910.screen.Interests.create_feed_form.CreateFeedFormViewmodel
+import com.samay910.screen.Interests.viewFeed.InterestFeedViewmodel
 import networking.createHttpClient
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
@@ -22,6 +23,7 @@ val networkModule= module {
     factory { HeadlinesViewmodel(get()) }
     factory { AddInterestViewmodel(get()) }
     factory { CreateFeedFormViewmodel(get()) }
+    factory { InterestFeedViewmodel(get()) }
 }
 //this is the module holding the native platform specific dependencies required for local storage
 expect val platformModule: Module
@@ -30,7 +32,10 @@ expect val platformModule: Module
 fun initKoin(config:(KoinApplication.()->Unit)?=null) {
     startKoin{
         config?.invoke(this)
-        modules(platformModule,networkModule)
+        modules(
+            platformModule,
+            networkModule)
 
     }
 }
+

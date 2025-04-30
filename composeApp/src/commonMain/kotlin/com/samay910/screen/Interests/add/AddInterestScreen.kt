@@ -71,13 +71,16 @@ import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.samay910.database.local.LocalResponse
 import com.samay910.screen.Headlines.HeadlinesViewmodel
 import com.samay910.screen.Headlines.InformationDialog
 import com.samay910.screen.Home.DisplayLinks
 import com.samay910.screen.Home.HomeViewmodel
 import com.samay910.screen.Interests.create_feed_form.CreateFeedFormScreen
 import com.samay910.screen.Interests.create_feed_form.CreateFeedFormViewmodel
+import com.samay910.screen.Interests.viewFeed.InterestFeedScreen
 import com.shared.Resources.getLogo
+import util.NetworkError
 
 class AddInterestScreen :Screen{
     @OptIn(ExperimentalMaterial3Api::class)
@@ -85,7 +88,7 @@ class AddInterestScreen :Screen{
     override fun Content(){
         val navigator = LocalNavigator.currentOrThrow
         val viewModel : AddInterestViewmodel = koinScreenModel()
-//        get the data from the local database
+//get the data from the local database
         viewModel.GetData()
 //Used to handel displaying of the info dialog
         var displayInfo by remember{ mutableStateOf(false) }
@@ -106,23 +109,23 @@ class AddInterestScreen :Screen{
         var displayRemovedDialog by remember{ mutableStateOf(false) }
         displayRemovedDialog=viewModel.displayRemove
 
-        //        this is required to maintain a smooth experence accross the application
+//this is required to maintain a smooth experience across the application
         val focusManager = LocalFocusManager.current
+        
+        val initLoading by viewModel.initloading.collectAsState()
 
-
-        //Ensures the column is scrollable
+//Ensures the column is scrollable
         val scrollState = rememberScrollState()
         Scaffold (
             topBar = {
                 CenterAlignedTopAppBar(
                     navigationIcon = {
-                        // --- Conditional Back Button Logic ---
-                        if (navigator.canPop) { // Check if navigator can pop back
+//make return within a tabs navigation stack when possible
+                        if (navigator.canPop) {
                             IconButton(onClick = { navigator.pop() }, modifier = Modifier.fillMaxWidth(0.2f).padding(top = 10.dp)) { // Action: pop back
                                 Column (
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
-
                                 ){
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -130,9 +133,9 @@ class AddInterestScreen :Screen{
                                     )
                                     Text("Back")
                                 }
-
                             }
-                        }else{
+                        }
+                        else{
                             Spacer(modifier = Modifier.fillMaxSize(0.2f))
                         }
                     },
@@ -155,179 +158,194 @@ class AddInterestScreen :Screen{
             },
             content = {innerPadding ->
                 Column(
-                    modifier = Modifier.padding(innerPadding).padding(20.dp).padding(bottom = 50.dp).verticalScroll(scrollState)
-                        .pointerInput(Unit) { // The 'Unit' key means this doesn't restart unnecessarily
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .padding(20.dp)
+                        .padding(bottom = 50.dp)
+                        .verticalScroll(scrollState)
+                        .pointerInput(Unit){
                             detectTapGestures(
-                                onPress = { /* Optional: Track press state */ },
+                                onPress = {},
                                 onTap = {
-                                    // When tapped, clear focus from the currently focused element
-                                    println("Tapped outside TextField - Clearing focus") // Log for confirmation
+// When tapped, clear focus from the currently focused element
                                     focusManager.clearFocus()
-                                })
+                                }
+                            )
                         }
-
-                ) {
-                    //Check if a dialog should be displayed
+                ){
+//Check if a dialog should be displayed
                     if (displayInfo) {
                         InformationDialog(viewmodel = viewModel)
                     }else if(displayRemovedDialog){
                         RemovedSuccessDialog(viewmodel = viewModel)
                     }
-                    //Area to provide a breif description and acess to the info dialog
-                    Row(
-
-                    ) {
-                        Box(modifier = Modifier.fillMaxWidth(0.9f)) {
-                            Text("Here your saved feeds will be displayed, you can also generate new feeds by simply clicking one of the 4 add buttons below")
+//Area to provide a brief description and access to the info dialog
+                    Row {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(0.9f)
+                        ){
+                            Text("Below you can manage multiple feeds saved locally to your device.For more information click the info button to the right ")
                         }
                         IconButton(
-//display a popup with specification as to how to interact with the screen and what utility is provided
                             onClick = {
-//this will display a simple alert dialog box explaining verbally what the screen offers and how to use it
                                 viewModel.updateDisplayInfo(true)
-                                /* Handle action */
                             }
-                        ) {
+                        ){
                             Icon(
                                 imageVector = Icons.Outlined.Info,
                                 contentDescription = "More",
-                                modifier = Modifier.fillMaxSize()
-                            )
+                                modifier = Modifier.fillMaxSize())
                         }
-
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-//            list of 4 buttons that either link to a generate feed dialog or a saved feed screen
+//list of 4 buttons that either link to a generate feed dialog or a saved feed screen
                     LazyColumn(
                         modifier = Modifier.height(600.dp),
                         verticalArrangement = Arrangement.Center,
-
                     ) {
-                        for (i in 1..4) {
-
+//display the loading section prior as the display requires details from saved feeds
+                        if (initLoading){
                             item {
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Text(
-                                    "Saved Feed ${i}: ",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(start = 10.dp)
-                                )
-                                Spacer(modifier = Modifier.height(5.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(1f).height(150.dp)
-                                ) {
-                                    if (i == 1) {
-                                        if (interest1) {
-                                            Box(
-                                                modifier = Modifier.weight(0.5f)
-                                            ){
-                                                ViewFeedButton(viewmodel = viewModel, index = i)
+                                Column(modifier = Modifier.fillMaxWidth(1f).height(400.dp).border(1.dp, Color.Black,shape = RoundedCornerShape(10.dp)).padding(10.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ){
+                                    Box(modifier = Modifier.fillMaxWidth(0.2f)){
+                                        CircularProgressIndicator(modifier = Modifier.fillMaxWidth(1f))
+                                    }
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text("Loading stored data...", color = Color.Gray)
+                                }
+                            }
+                        }else {
+                            for (i in 1..4) {
+                                item {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(
+                                        "Saved Feed ${i}: ",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(start = 10.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(5.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(1f).height(150.dp)
+                                    ) {
+//here as i am dealing with 4 feeds i can consider each possible case for the 4 feeds
+                                        if (i == 1) {
+//if the interest is connected to a saved feed
+                                            if (interest1) {
+                                                Box(
+                                                    modifier = Modifier.weight(0.5f)
+                                                ) {
+                                                    ViewFeedButton(viewmodel = viewModel, index = i, navigator = navigator)
+                                                }
+                                                Spacer(modifier = Modifier.weight(0.01f))
+                                                Box(
+                                                    modifier = Modifier.weight(0.4f)
+                                                ) {
+                                                    DeleteFeed(viewmodel = viewModel, index = i)
+                                                }
                                             }
-                                            Spacer(modifier = Modifier.weight(0.01f))
-                                            Box(
-                                                modifier = Modifier.weight(0.4f)
-                                            ){
-                                                DeleteFeed(viewmodel = viewModel, index = i)
-                                            }
-
-                                        } else {
-//                            display a creation button for the interest
-                                            Box(
-                                                modifier = Modifier.weight(1f)
-                                            ){
-                                                CreateFeedButton(
-                                                    navigator = navigator,
-                                                    viewmodel = viewModel,
-                                                    index = i
-                                                )
-                                            }
-
-                                        }
-                                    } else if (i == 2) {
-                                        if (interest2) {
-                                            Box(
-                                                modifier = Modifier.weight(0.5f)
-                                            ){
-                                                ViewFeedButton(viewmodel = viewModel, index = i)
-                                            }
-                                            Spacer(modifier = Modifier.weight(0.01f))
-                                            Box(
-                                                modifier = Modifier.weight(0.4f)
-                                            ){
-                                                DeleteFeed(viewmodel = viewModel, index = i)
-                                            }
-
-                                        } else {
-//                            display a creation button for the interest
-                                            Box(
-                                                modifier = Modifier.weight(1f)
-                                            ){
-                                                CreateFeedButton(
-                                                    navigator = navigator,
-                                                    viewmodel = viewModel,
-                                                    index = i
-                                                )
+                                            else {
+//display a creation button for the interest
+                                                Box(
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    CreateFeedButton(
+                                                        navigator = navigator,
+                                                        viewmodel = viewModel,
+                                                        index = i
+                                                    )
+                                                }
                                             }
                                         }
-                                    } else if (i == 3) {
-                                        if (interest3) {
-                                            Box(
-                                                modifier = Modifier.weight(0.5f)
-                                            ){
-                                                ViewFeedButton(viewmodel = viewModel, index = i)
+                                        else if (i == 2) {
+                                            if (interest2) {
+                                                Box(
+                                                    modifier = Modifier.weight(0.5f)
+                                                ) {
+                                                    ViewFeedButton(viewmodel = viewModel, index = i, navigator = navigator)
+                                                }
+                                                Spacer(modifier = Modifier.weight(0.01f))
+                                                Box(
+                                                    modifier = Modifier.weight(0.4f)
+                                                ) {
+                                                    DeleteFeed(viewmodel = viewModel, index = i)
+                                                }
                                             }
-                                            Spacer(modifier = Modifier.weight(0.01f))
-                                            Box(
-                                                modifier = Modifier.weight(0.4f)
-                                            ){
-                                                DeleteFeed(viewmodel = viewModel, index = i)
-                                            }
-
-                                        } else {
-//                            display a creation button for the interest
-                                            Box(
-                                                modifier = Modifier.weight(1f)
-                                            ){
-                                                CreateFeedButton(
-                                                    navigator = navigator,
-                                                    viewmodel = viewModel,
-                                                    index = i
-                                                )
+                                            else {
+//display a creation button for the interest
+                                                Box(
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    CreateFeedButton(
+                                                        navigator = navigator,
+                                                        viewmodel = viewModel,
+                                                        index = i
+                                                    )
+                                                }
                                             }
                                         }
-                                    } else if (i == 4) {
-                                        if (interest4) {
-                                            Box(
-                                                modifier = Modifier.weight(0.5f)
-                                            ){
-                                                ViewFeedButton(viewmodel = viewModel, index = i)
-                                            }
-                                            Spacer(modifier = Modifier.weight(0.01f))
-                                            Box(
-                                                modifier = Modifier.weight(0.4f)
-                                            ){
-                                                DeleteFeed(viewmodel = viewModel, index = i)
-                                            }
+                                        else if (i == 3) {
+                                            if (interest3) {
+                                                Box(
+                                                    modifier = Modifier.weight(0.5f)
+                                                ) {
+                                                    ViewFeedButton(viewmodel = viewModel, index = i, navigator = navigator)
+                                                }
+                                                Spacer(modifier = Modifier.weight(0.01f))
+                                                Box(
+                                                    modifier = Modifier.weight(0.4f)
+                                                ) {
+                                                    DeleteFeed(viewmodel = viewModel, index = i)
+                                                }
 
-                                        } else {
-//                            display a creation button for the interest
-                                            Box(
-                                                modifier = Modifier.weight(1f)
-                                            ){
-                                                CreateFeedButton(
-                                                    navigator = navigator,
-                                                    viewmodel = viewModel,
-                                                    index = i
-                                                )
+                                            } else {
+//display a creation button for the interest
+                                                Box(
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    CreateFeedButton(
+                                                        navigator = navigator,
+                                                        viewmodel = viewModel,
+                                                        index = i
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        else if (i == 4) {
+                                            if (interest4) {
+                                                Box(
+                                                    modifier = Modifier.weight(0.5f)
+                                                ) {
+                                                    ViewFeedButton(viewmodel = viewModel, index = i, navigator = navigator)
+                                                }
+                                                Spacer(modifier = Modifier.weight(0.01f))
+                                                Box(
+                                                    modifier = Modifier.weight(0.4f)
+                                                ) {
+                                                    DeleteFeed(viewmodel = viewModel, index = i)
+                                                }
+
+                                            } else {
+//display a creation button for the interest
+                                                Box(
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    CreateFeedButton(
+                                                        navigator = navigator,
+                                                        viewmodel = viewModel,
+                                                        index = i
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
+
                             }
-
                         }
-
                     }
                     Spacer(modifier = Modifier.height(40.dp))
                 }
@@ -336,88 +354,16 @@ class AddInterestScreen :Screen{
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-//Here i provide a discription of what the screen offers and how to use it
-fun InformationDialog(viewmodel: AddInterestViewmodel){
-//        potentially add images
-    var displayInfo by remember { mutableStateOf(false) }
-    displayInfo = viewmodel.displayInfo
-    BasicAlertDialog(
-        onDismissRequest = {
-//            this makes it so that if the user clicks outside the box an action is performed
-            viewmodel.updateDisplayInfo(false)
-        }
-    ){
-        Surface(
-            modifier = Modifier.fillMaxSize(0.8f),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            //        esures the coulmn is scrollable
-            val scrollState = rememberScrollState()
-
-            Column(
-                modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
-            ) {
-//                here is where the summary will be displayed and the other components will be involved
-                Row (
-                    modifier = Modifier.fillMaxWidth(1f),
-                    horizontalArrangement = Arrangement.Start
-                ){
-                    IconButton(
-                        onClick = {
-                            // Define dismiss action & close dialog
-                            println("Dismiss button clicked.") // Optional logging
-                            viewmodel.updateDisplayInfo(false)
-                        },
-                        modifier = Modifier.fillMaxWidth(1f)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-
-                            ) {
-                            Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
-                            Text("Close")
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
-                Row(
-                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
-                ) {
-//                    check if the network error is null, if not then display the error
-                    Text("Info: ", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
-
-
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Row (
-                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
-                ){
-                    Text("Here you will be able to generate a AI summary of the latest headlines related to an inteest of yours." +
-                            "Simply add to the filter specifying a keyword or use the preset dropdown menues to better suport the filter used when " +
-                            "gatherig relavant articles regarding your interest." +
-                            "All article data used within the summary is sourced from newsapi.org services.You can also provide a specific domain.Simply enter" +
-                            "a name correlating to a news orginisation/source you trust and we will try to best prioritise articles from that source in the generated summary where possible" +
-                            "Once you have applied the desired filters simply select generate and the summary will be generated.To view the generated " +
-                            "summary simply click view summary. The summary genrated is through the usage of googles Gemini LLM.It is fed relavant article data and " +
-                            "summarieses it.Below the summary is a reffrence to the origional article that you can click on to view the full article."
-                    )
-                }
-            }}
-    }
-}
 
 @Composable
 fun CreateFeedButton(navigator: Navigator, viewmodel: AddInterestViewmodel, index:Int){
     Button(
         onClick = {
-//                                    open the create dialog
+//open the create dialog
             navigator.push(CreateFeedFormScreen(index = index))
         },
         modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
-//        change the shape
+//change the shape
         shape = RoundedCornerShape(5.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.White,
@@ -440,13 +386,14 @@ fun CreateFeedButton(navigator: Navigator, viewmodel: AddInterestViewmodel, inde
     }
 }
 
-
 @Composable
-fun ViewFeedButton(viewmodel: AddInterestViewmodel,index:Int){
+fun ViewFeedButton(viewmodel: AddInterestViewmodel,index:Int,navigator: Navigator){
 
+    var savedFeeds by remember { mutableStateOf(listOf<LocalResponse>()) }
+    savedFeeds=viewmodel.savedFeeds.toList()
     Button(
         onClick = {
-
+            navigator.push(InterestFeedScreen(indexRef = index, savedFeeds =  savedFeeds))
         },
         modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(1f),
 //        change the shape
@@ -461,11 +408,58 @@ fun ViewFeedButton(viewmodel: AddInterestViewmodel,index:Int){
         )
 
     ) {
-//                                        here display the feed and the option to remove the feed
-        Text("created")
+//Here display the current feed filters saved
+        Column(
+            modifier = Modifier.fillMaxSize(1f),
+        ){
+            if (index==1){
+                Text("Articles Filters :")
+                if (viewmodel.interest1Details.q!=""){
+                    Text("+${viewmodel.interest1Details.q}")}
+                if (viewmodel.interest1Details.topic!=""){
+                    Text("+${viewmodel.interest1Details.topic}")}
+                if (viewmodel.interest1Details.location!=""){
+                    Text("+${viewmodel.interest1Details.location}")
+                }
+                Text("Articles from: ${viewmodel.interest1Details.source}")
+            }
+            else if (index==2){
+                Text("Articles Filters :")
+                if (viewmodel.interest2Details.q!=""){
+                    Text("+${viewmodel.interest2Details.q}")}
+                if (viewmodel.interest2Details.topic!=""){
+                    Text("+${viewmodel.interest2Details.topic}")}
+                if (viewmodel.interest2Details.location!=""){
+                    Text("+${viewmodel.interest2Details.location}")
+                }
+                Text("Articles from: ${viewmodel.interest2Details.source}")
+            }
+            else if (index==3){
+                Text("Articles Filters :")
+                if (viewmodel.interest3Details.q!=""){
+                    Text("+${viewmodel.interest3Details.q}")}
+                if (viewmodel.interest3Details.topic!=""){
+                    Text("+${viewmodel.interest3Details.topic}")}
+                if (viewmodel.interest3Details.location!=""){
+                    Text("+${viewmodel.interest3Details.location}")
+                }
+                Text("Articles from: ${viewmodel.interest3Details.source}")
+            }
+            else if (index==4) {
+                Text("Articles Filters :")
+                if (viewmodel.interest4Details.q!=""){
+                    Text("+${viewmodel.interest4Details.q}")}
+                if (viewmodel.interest4Details.topic!=""){
+                    Text("+${viewmodel.interest4Details.topic}")}
+                if (viewmodel.interest4Details.location!=""){
+                    Text("+${viewmodel.interest4Details.location}")
+                }
+                Text("Articles from: ${viewmodel.interest4Details.source}")
+            }
+        }
+
     }
 }
-
 
 @Composable
 fun DeleteFeed(viewmodel: AddInterestViewmodel,index: Int){
@@ -493,6 +487,7 @@ fun DeleteFeed(viewmodel: AddInterestViewmodel,index: Int){
     }
 }
 
+//this function essentially displays that a feed has been successfully deleted from the local database
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RemovedSuccessDialog(viewmodel: AddInterestViewmodel){
@@ -501,86 +496,73 @@ fun RemovedSuccessDialog(viewmodel: AddInterestViewmodel){
 
     val loading by viewmodel.loading.collectAsState()
 
-
     BasicAlertDialog(
         onDismissRequest = {
-//            this makes it so that if the user clicks outside the box an action is performed
+//this makes it so that if the user clicks outside the box an action is performed
             viewmodel.updateDisplayInfo(false)
         }
     ){
         Surface(
-            modifier = Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.5f),
+            modifier = Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.4f),
             shape = RoundedCornerShape(8.dp)
         ) {
-            //        esures the coulmn is scrollable
+//ensures the column is scrollable
             val scrollState = rememberScrollState()
-
-
-
+//displays a loading section if it takes time to update the local database and success if it has been removed
             Column(
                 modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
             ) {
-//                here is where the summary will be displayed and the other components will be involved
+//here is where the summary will be displayed and the other components will be involved
                 Row (
                     modifier = Modifier.fillMaxWidth(1f),
                     horizontalArrangement = Arrangement.Start
                 ){
                     IconButton(
                         onClick = {
-                            // Define dismiss action & close dialog
-                            println("Dismiss button clicked.") // Optional logging
+// Define dismiss action & close dialog
                             viewmodel.updateDisplayRemove(false)
                         },
                         modifier = Modifier.fillMaxWidth(1f)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-
-                            ) {
+                        ){
                             Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
                             Text("Close")
                         }
                     }
                 }
                 Spacer(modifier = Modifier.height(10.dp))
-//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
+//this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
                 Row(
                     modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
                 ) {
-//                    check if the network error is null, if not then display the error
+//check if the network error is null, if not then display the error
                     Text("Updating local storage: ", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
-
-
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row (
                     modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
                 ){
                     if(loading){
-                        //                        display a loading icon at the center of the page and message below until complete
+//display a loading icon at the center of the page and message below until complete
                         Box(modifier = Modifier.fillMaxWidth(1f), contentAlignment = Alignment.Center){
                             CircularProgressIndicator(modifier = Modifier.fillMaxWidth(0.5f))
                         }
-
                         Spacer(modifier = Modifier.height(10.dp))
                         Text("Removing feed...", color = Color.Gray)
-
-                    }else {
-//                        display success message and a button to return
+                    }
+                    else {
+//display success message and a button to return
                         Column(modifier = Modifier.fillMaxWidth(1f), horizontalAlignment = Alignment.CenterHorizontally){
                             Spacer(modifier = Modifier.height(10.dp))
-
                             Text("Success!")
-//                            image of success icon
+//image of success icon
                             Spacer(modifier = Modifier.height(10.dp))
-
                             Icon(imageVector = Icons.Outlined.CheckCircle, contentDescription = "Confirm and Save")
-
-
                             Spacer(modifier = Modifier.height(10.dp))
                             Text("To escape the popup click the button below or close above. ")
                             Spacer(modifier = Modifier.height(10.dp))
-
                             Button(onClick = {
                                 viewmodel.updateDisplayRemove(false)
                             }) {
@@ -596,9 +578,72 @@ fun RemovedSuccessDialog(viewmodel: AddInterestViewmodel){
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+//here i must specify that the domain input requires for the website
+fun InformationDialog(viewmodel: AddInterestViewmodel){
+    var displayInfo by remember { mutableStateOf(false) }
+    displayInfo = viewmodel.displayInfo
+    BasicAlertDialog(
+        onDismissRequest = {
+//this makes it so that if the user clicks outside the box an action is performed
+            viewmodel.updateDisplayInfo(false)
+        }
+    ){
+        Surface(
+            modifier = Modifier.fillMaxWidth(1f).fillMaxHeight(0.5f),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+//ensures the column is scrollable
+            val scrollState = rememberScrollState()
 
+            Column(
+                modifier = Modifier.padding(20.dp).verticalScroll(scrollState)
+            ) {
+//close button which is reused on different dialogs
+                Row (
+                    modifier = Modifier.fillMaxWidth(1f),
 
+                    ){
+                    IconButton(
+                        onClick = {
+                            // Define dismiss action & close dialog
+                            println("Dismiss button clicked.") // Optional logging
+                            viewmodel.updateDisplayInfo(false)
+                        },
+                        modifier = Modifier.fillMaxWidth(0.3f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
 
+                            ) {
+                            Icon(imageVector = Icons.Filled.Close, contentDescription = "Close")
+                            Text("Close")
+                        }
+                    }
 
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+//                this section will display a loading bar while the API calls are being made and update the user at what stage in summary generation the application is at
+                Row(
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ) {
+//                    check if the network error is null, if not then display the error
+                    Text("Info: ", fontSize = 20.sp, fontWeight = FontWeight.Bold, style = TextStyle(color = Color.Red))
 
-
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row (
+                    modifier = Modifier.fillMaxWidth(1f), horizontalArrangement = Arrangement.Center
+                ){
+                    Text("Here you simply enter some text and the application will search for the latest relevant articles " +
+                            "related to that input.To change or update inputs simply change the text and click generate." +
+                            "If you are feeling lazy and just want headlines feel free to click generate without entering any text." +
+                            "The application will do its best at providing more generic breaking headlines that are likely to be of " +
+                            "interest to anyone.To view an article in more detail simply press the article of interest and swipe left and right" +
+                            "for as many articles as we found.To exit there will always be an exit button.And if you prefer not to swipe simply press next" +
+                            "article or prior for the previous one.All articles displayed are fully referenced and easily accessible from just a click on the link"
+                    )
+                }
+            }}}
+}

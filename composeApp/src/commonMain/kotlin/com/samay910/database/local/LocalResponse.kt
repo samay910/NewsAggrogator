@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class LocalResponse(
     val id: Long,
-    val q: String?,
-    val topic: String?,
-    val location: String?,
-    val source: String?
+    var q: String = "unset",
+    var topic: String = "unset",
+    var location: String = "unset",
+    var source: String="unset"
 )
