@@ -4,9 +4,9 @@ import com.samay910.networking.api_clients.gemini_api.GoogleGeminiApiClient
 import com.samay910.networking.api_clients.news_api.NewsApiClient
 import com.samay910.screen.Headlines.HeadlinesViewmodel
 import com.samay910.screen.Home.HomeViewmodel
-import com.samay910.screen.Interests.add.AddInterestViewmodel
+import com.samay910.screen.Interests.manage_feeds.AddInterestViewmodel
 import com.samay910.screen.Interests.create_feed_form.CreateFeedFormViewmodel
-import com.samay910.screen.Interests.viewFeed.InterestFeedViewmodel
+import com.samay910.screen.Interests.view_feed.InterestFeedViewmodel
 import networking.createHttpClient
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin

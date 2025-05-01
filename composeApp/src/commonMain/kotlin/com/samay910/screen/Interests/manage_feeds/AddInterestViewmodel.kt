@@ -1,4 +1,4 @@
-package com.samay910.screen.Interests.add
+package com.samay910.screen.Interests.manage_feeds
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -7,7 +7,6 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import com.samay910.database.local.LocalDatabase
 import com.samay910.database.local.LocalResponse
-import com.samay910.networking.api_clients.news_api.dto.InterestInput
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

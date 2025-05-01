@@ -2,13 +2,11 @@ package com.samay910.tabs.Interests
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
-import com.samay910.screen.Interests.add.AddInterestScreen
+import com.samay910.screen.Interests.manage_feeds.AddInterestScreen
 import com.shared.Resources.getTabIcon
 
 object InterestsTab:Tab{

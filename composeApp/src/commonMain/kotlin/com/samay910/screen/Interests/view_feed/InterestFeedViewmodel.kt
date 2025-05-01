@@ -1,4 +1,4 @@
-package com.samay910.screen.Interests.viewFeed
+package com.samay910.screen.Interests.view_feed
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import coil3.compose.AsyncImage
-import com.samay910.database.local.LocalDatabase
 import com.samay910.database.local.LocalResponse
 import com.samay910.networking.api_clients.news_api.NewsApiClient
 import com.samay910.networking.api_clients.news_api.dto.Article
@@ -19,12 +18,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.todayIn
 import util.NetworkError
 import util.onError
 import util.onSuccess
