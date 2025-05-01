@@ -19,10 +19,12 @@ import util.NetworkError
 import util.Result
 
 class GoogleGeminiApiClient(private val httpClient: HttpClient){
-
-    //    function to actualy get the resulting summary given the prior api response
+//function to actually get the resulting summary given the prior api response
+//this api doesn't take the request using parameters as the text request would be limited, meaning to parse the request using the body
+//an object is required to be made with the exact same structure as the body request and then provide the appropriate input
+//the dto's within body_json is the objects involved in setting the structure for the body request
     suspend fun GetSummary(articles: ArticleData): Result<PartResponse, NetworkError> {
-//        first create the object that will form the body of the json request
+//first create the object that will form the body of the json request
         val part:PartRequest = PartRequest( text = "${articles.articleDescriptions.joinToString(separator = ".Next Article:")} " +
                 "Given the articles mentioned, generate a summary referencing all the mentioned articles.In the generated text,with the summary do not provide an introduction as the result should just be the summary with no formatted text")
         val geminiInput: GeminiInput = GeminiInput(contents = listOf(Content(parts = listOf(part))))
@@ -33,7 +35,7 @@ class GoogleGeminiApiClient(private val httpClient: HttpClient){
                     urlString = Constants.geminiURL
                 )
                 {
-//                    essentially provide the json body holding the data i want the LLM to summarise
+//essentially provide the json body holding the data i want the LLM to summarise
                     setBody(
                         geminiInput
                     )
@@ -49,17 +51,16 @@ class GoogleGeminiApiClient(private val httpClient: HttpClient){
             }
 
         return when(response.status.value){
-//            only issue that can come is from the sources filed
-
-//            if response starts with 2 it is successful
+//only issue that can come is from the sources filed
+//if response starts with 2 it is successful
             in 200..299 ->{
-//                the repsonse will just be the text summary
+//the response will just be the text summary
                 val summary = response.body<AiSummary>()
                 Result.Success(summary.candidates[0].content.parts[0])
             }
-//            This is the error code for parameter based errors
+//This is the error code for parameter based errors
             400 -> Result.Error(NetworkError.BAD_REQUEST)
-//            this returns the appropriate error message to be displayed and inform the user
+//this returns the appropriate error message to be displayed and inform the user
             401 -> Result.Error(NetworkError.UNAUTHORIZED)
             409 -> Result.Error(NetworkError.CONFLICT)
             408 -> Result.Error(NetworkError.REQUEST_TIMEOUT)

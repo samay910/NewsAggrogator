@@ -25,22 +25,22 @@ fun createHttpClient(engine: HttpClientEngine): HttpClient {
             }
             level = LogLevel.ALL
         }
-//        for json parsing and how the response will be digested/configured
+//for json parsing and how the response will be digested/configured
         install(ContentNegotiation) {
             json(
                 json = Json {
-//                    makes the response human readable
+//makes the response human readable
                     prettyPrint = true
-//                    if the api responds with fields we dont want the app wont crash
+//if the api responds with fields we dont want the app wont crash
                     ignoreUnknownKeys = true
                 }
             )
         }
         defaultRequest {
-//            specify some default attributes
+//specify some default attributes
             contentType(ContentType.Application.Json)
             header(HttpHeaders.ContentType, ContentType.Application.Json)
-//            as i am dealing with differetn API's i need to consider differetn keys and will not specify the key here
+//as i am dealing with different API's i need to consider different keys and will not specify the key here
         }
     }
 }

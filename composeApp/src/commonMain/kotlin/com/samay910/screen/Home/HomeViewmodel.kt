@@ -152,12 +152,12 @@ class HomeViewmodel(
     }
 
 //this function gets the date from 2 days prior and formats it for the news api call
-    fun get2DaysBefore(): String {
+    fun get7DaysBefore(): String {
 //gets today's date in the system's default time zone
         val systemTimeZone: TimeZone = TimeZone.currentSystemDefault()
         val today: LocalDate = Clock.System.todayIn(systemTimeZone)
 //This correctly handles month and year rollovers.
-        val twoDaysAgo: LocalDate = today.minus(2, DateTimeUnit.DAY)
+        val twoDaysAgo: LocalDate = today.minus(7, DateTimeUnit.DAY)
         val year = twoDaysAgo.year
         val month = twoDaysAgo.monthNumber
         val day = twoDaysAgo.dayOfMonth
@@ -172,7 +172,7 @@ class HomeViewmodel(
             category = category,
             country = country,
 //constructed based on the current date and time for newer articles to be considered only
-            from = get2DaysBefore(),
+            from = get7DaysBefore(),
             sortBy = "publishedAt",
             pageSize = 30,
             page = 1
