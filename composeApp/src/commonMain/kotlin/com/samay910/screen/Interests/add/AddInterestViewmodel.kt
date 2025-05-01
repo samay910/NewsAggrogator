@@ -59,7 +59,7 @@ class AddInterestViewmodel(
         }
     }
 
-//    this is only added on the first load of the screen to ensure the local data is reflected in the gui always
+//this is only added on the first load of the screen to ensure the local data is reflected in the gui always
     private val _initLoading = MutableStateFlow(false)
     val initloading: StateFlow<Boolean> = _initLoading
 
@@ -147,34 +147,41 @@ class AddInterestViewmodel(
             }
         }
 
+//manage loading within dialog
+    private val _loading = MutableStateFlow(false)
+    val loading: StateFlow<Boolean> = _loading
+
+//manage display of dialogs
+
     var displayRemove by mutableStateOf(false)
         private set
     fun updateDisplayRemove(input: Boolean) {
         displayRemove = input
     }
-    private val _loading = MutableStateFlow(false)
-    val loading: StateFlow<Boolean> = _loading
 
     var displayInfo by mutableStateOf(false)
         private set
 
     fun updateDisplayInfo(input: Boolean) {
         displayInfo = input}
+
+//used to manage what feed within the local database to remove based on its feedid primary key
     var selectedToRemove by mutableStateOf(0)
         private set
+
     fun updateSelectedToRemove(input: Int) {
         selectedToRemove = input
     }
-// function reuqired to remove the local database entry
-    fun DeleteFeed(){
 
+//function required to remove the local database entry
+    fun DeleteFeed(){
         updateDisplayRemove(true)
         screenModelScope.launch {
             _loading.value = true
             RemoveFeed()
         }
     }
-
+//called within the above function to remove the feed
     suspend fun RemoveFeed(){
         localDatabase.removeSavedInterest(selectedToRemove.toLong())
         _loading.value = false

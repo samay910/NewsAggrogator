@@ -10,22 +10,22 @@ import com.samay910.screen.Home.HomeScreen
 import com.shared.Resources.getTabIcon
 
 object HeadlinesTab:Tab {
-    //    the content of the tab should hold the homepage.
+//content of the tab is set to a set of screens
     @Composable
     override fun Content() {
-        //        specifying the initial screen to be displayed for the tab
+//specifying the initial screen to be displayed for the tab
         Navigator(HeadlinesScreen()){ navigator ->
             SlideTransition(navigator)
         }
     }
 
+//    provides the icon and bottom bar tab button interactivity
     override val options: TabOptions
         @Composable
         get() {
             val title = "Headlines"
-//            this icon itself doesnt need to be cached as it is only used here and no where else.
+//this icon itself doesn't need to be cached as it is only used here and no where else.
             val icon = (getTabIcon("headlines"))
-
             return remember {
                 TabOptions(
                     index = 0u,

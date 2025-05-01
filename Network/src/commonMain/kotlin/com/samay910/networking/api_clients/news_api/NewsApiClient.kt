@@ -17,35 +17,35 @@ import util.NetworkError
 import util.Result
 
 class NewsApiClient(
+//Uses the established http client and performs required api calls from that client
     private val httpClient: HttpClient
 ) {
-
-//    specify in the filter that the domain restriction will be attempted but not strictly enforced -> restrictions of the api and available utilities in the free plan
+//specify in the filter that the domain restriction will be attempted but not strictly enforced -> restrictions of the api and available utilities in the free plan
     suspend fun getNews(filter: InterestInput):Result<ArticleList,NetworkError>{
         val api_key= Constants.newsApiKey
-//            this is a single edndpoint as within this project i use a single api call using th enews.api
+//this is a single edndpoint as within this project i use a single api call using th enews.api
             val response =
                 try{
                         httpClient.get(
-//                            as in my application i dont use different APIs from NewsData i opt to use a string literal
+//reference the correct news.org api endpoint
                         urlString = Constants.newsapiURL
                     ){
-        //                this is a less error prone way of making a request with multiple parameters.
+//this is a less error prone way of making a request with multiple parameters.
                             parameters {
-//                                only adds the parameters that were filled and forms the q parameter based n user input
-//                                must consider all combinations to ensure the filter is applied appropriately,
-//                                1 combinations with 3 objects
+//only adds the parameters that were filled and forms the q parameter based n user input
+//must consider all combinations to ensure the filter is applied appropriately,
+//1 combinations with 3 objects results in following combinations
                                 if (filter.q !=""&& filter.category!="" && filter.country!=""){
                                     parameter("q", "${filter.q} AND ${filter.category} AND ${filter.country}")
                                 }
-//                                3 combinations with 2 objects
+//3 combinations with 2 objects
                                 else if ( filter.q !=""&& filter.category!=""){
                                     parameter("q", "${filter.q} AND ${filter.category}")
                                 }else if (filter.q !=""&& filter.country!=""){
                                     parameter("q", "${filter.q} AND ${filter.country}")
                                 }else if (filter.category !=""&& filter.country!=""){
                                     parameter("q", "${filter.category} AND ${filter.country}")
-//                                    3 combinations with 1 object
+//3 combinations with 1 object
                                 }else if (filter.q !=""){
                                     parameter("q", filter.q)
                                 }
@@ -62,48 +62,45 @@ class NewsApiClient(
                                 if (filter.sortBy!=""){
                                     parameter("sortBy", filter.sortBy)
                                 }
-
+//these are default parameters that are set based on prior research and knowledge of the api
                                 parameter("language", "en")
                                 parameter("searchin","title,description")
-                                parameter("pageSize",30)
+                                parameter("pageSize",filter.pageSize)
                                 parameter("page",1)
-
-
                             }
                             headers{
-//                                the other headers are set as a default
+//the other headers are set as a default
                                 header("X-Api-Key",api_key)
                             }
 
-        //                here you can add a filter such that it provides incremental updates on the request progression so a progress indicator can be displayed while the data is loading
+//here you can add a filter such that it provides incremental updates on the request progression so a progress indicator can be displayed while the data is loading
                     }
-//                    deal with errors occuring during the request
+//deal with errors occurring during the request
                 } catch (e: UnresolvedAddressException){
                     return Result.Error(NetworkError.NO_INTERNET)
                 }catch (e: SerializationException){
                     return Result.Error(NetworkError.SERIALIZATION)
                 }
-//  Handels the servers HTTP response codes accordingly
+//Handles the servers HTTP response codes accordingly
         return when(response.status.value){
-//            only issue that can come is from the sources filed
+//only issue that can come is from the sources filed
 
-//            if response starts with 2 it is successful
+//if response starts with 2 it is successful
             in 200..299 ->{
-                //                here we need a DTO(data transfer object) to store the response
-//                all DTO's need to be serializable by default.
-//              if the reuslt is empty it will be handeled on the client side.
+//here we need a DTO(data transfer object) to store the response
+//all DTO's need to be serializable by default.
+//if the result is empty it will be handled on the client side.
                 val articles = response.body<ArticleList>()
-
-                //                check how many results were found as if none were found given the filter a error should be returned
+//check how many results were found as if none were found given the filter a error should be returned
                 if (response.body<ArticleList>().totalResults==0){
                     Result.Error(NetworkError.BAD_REQUEST)
                 }
                 else{
                     Result.Success(articles)
             }}
-//            This is the error code for parameter based errors
+//This is the error code for parameter based errors
             400 -> Result.Error(NetworkError.BAD_REQUEST)
-//            this returns the appropriate error message to be displayed and inform the user
+//this returns the appropriate error message to be displayed and inform the user
             401 -> Result.Error(NetworkError.UNAUTHORIZED)
             409 -> Result.Error(NetworkError.CONFLICT)
             408 -> Result.Error(NetworkError.REQUEST_TIMEOUT)

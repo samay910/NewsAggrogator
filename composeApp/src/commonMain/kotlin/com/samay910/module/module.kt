@@ -13,9 +13,11 @@ import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
+//this file ensures dependency injection using koin is possible on both platforms
+
 //this is fine for the API calls and network activity but not for the local database.To deal with this i initialise koin on both respective platforms and then add necessary additional modules
 val networkModule= module {
-//    create the atual HTTP client that will be used to call different API's
+//    create the actual HTTP client that will be used to call different API's
     single { createHttpClient(getHttpEngine()) }
     single { NewsApiClient(get()) }
     single { GoogleGeminiApiClient(get()) }
@@ -28,14 +30,13 @@ val networkModule= module {
 //this is the module holding the native platform specific dependencies required for local storage
 expect val platformModule: Module
 
-//the parameter is jsut required to configure the android side of things
+//the parameter is just required to configure the android side of things
 fun initKoin(config:(KoinApplication.()->Unit)?=null) {
     startKoin{
         config?.invoke(this)
         modules(
             platformModule,
             networkModule)
-
     }
 }
 

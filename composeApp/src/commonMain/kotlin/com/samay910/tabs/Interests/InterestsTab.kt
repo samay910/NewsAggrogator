@@ -12,10 +12,10 @@ import com.samay910.screen.Interests.add.AddInterestScreen
 import com.shared.Resources.getTabIcon
 
 object InterestsTab:Tab{
-//    the content of the tab should hold the homepage.
+//the content of the tab should hold the homepage.
     @Composable
     override fun Content() {
-    //        specifying the initial screen to be displayed for the tab
+//specifying the initial screen to be displayed for the tab
     Navigator(AddInterestScreen()){ navigator ->
         SlideTransition(navigator)
     }
@@ -24,9 +24,8 @@ object InterestsTab:Tab{
         @Composable
         get() {
             val title = "Interests"
-//            this icon itself doesnt need to be cached as it is only used here and no where else.
+//this icon itself doesn't need to be cached as it is only used here and no where else.
             val icon = (getTabIcon("interests"))
-
             return remember {
                 TabOptions(
                     index = 1u,

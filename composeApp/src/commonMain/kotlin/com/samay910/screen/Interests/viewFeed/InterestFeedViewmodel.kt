@@ -34,21 +34,14 @@ class InterestFeedViewmodel(
     private val newsApiClient: NewsApiClient
 ): ScreenModel {
 
-    fun clearAll(){
-
-    }
-//    store the index holding reffrence to interest entry stored locally
+// store the index holding reference to interest entry stored locally
     var interestIndex by mutableStateOf(0)
 
     var savedFeeds by mutableStateOf(listOf<LocalResponse>())
 
-
-
-    //    get the local response from the database
+//get the local response from the database
     fun GetData(){
-
-
-//        if the data has been loaded already to avoid refreshes
+//if the data has been loaded already to avoid refreshes
         if(_newsResponse.value==null){
             screenModelScope.launch {
                 _articlesLoading.value = true
@@ -58,7 +51,7 @@ class InterestFeedViewmodel(
                         currentFeed=i
                     }
                 }
-//            filter the current feed
+//filter the current feed as the default value is set to unset and thus prior to making the request i need to ensure the input is an empty string
                 if (currentFeed.topic=="unset"){
                     currentFeed.topic=""
                 }
@@ -70,16 +63,14 @@ class InterestFeedViewmodel(
                 if (currentFeed.source=="unset"){
                     currentFeed.source=""
                 }
+//perform api request which has been reused from prior screens
                 GetArticles()
 
             }
         }
-
-
-
     }
 
-
+//    stores the actual current feed filters for the request
     var currentFeed by mutableStateOf(LocalResponse(
         id = 0,
         topic = "",
@@ -87,39 +78,14 @@ class InterestFeedViewmodel(
         q = ""
     ))
 
-
-
+//manage display dialogs
     var displayInfo by mutableStateOf(false)
         private set
 
     fun updateDisplayInfo(input: Boolean) {
         displayInfo = input}
 
-
-//managing the user input
-    var textFilter by mutableStateOf("")
-        private set
-
-    fun updatetextFilter(input: String) {
-        textFilter = input
-    }
-
-
-//-------------------------Required for API calls-------------------------------------
-//    the approach below is to ensure thread safety through the use of state flows
-//    have a way to manage the results from api requests
-private val _newsResponse = MutableStateFlow<ArticleList?>(null)
-    val newsResponse: StateFlow<ArticleList?> = _newsResponse
-    //    used to handel the display of loading composable
-//    return the error to be displayed
-    private val _networkError = MutableStateFlow<NetworkError?>(null)
-    val networkError: StateFlow<NetworkError?> = _networkError
-
-    //newsdata status
-    private val _articlesLoading = MutableStateFlow(false)
-    val articlesLoading: StateFlow<Boolean> = _articlesLoading
-
-//    keep track of errors and display them when necissary
+    //    keep track of errors and display them when necissary
     var displayWarning by mutableStateOf(false)
         private set
     fun updateDisplayWarning(input: Boolean) {
@@ -127,24 +93,45 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
         displayWarning = input
     }
 
+    var displayArticle by mutableStateOf(false)
+
+    fun updateDisplayArticle(input: Boolean) {
+        displayArticle = input
+    }
+
+//-------------------------Required for API calls-------------------------------------
+//most of the functions and variables are reused from other screens
+//the approach below is to ensure thread safety through the use of state flows
+//have a way to manage the results from api requests
+    private val _newsResponse = MutableStateFlow<ArticleList?>(null)
+    val newsResponse: StateFlow<ArticleList?> = _newsResponse
+
+//used to handel the display of loading composable
+//return the error to be displayed
+    private val _networkError = MutableStateFlow<NetworkError?>(null)
+    val networkError: StateFlow<NetworkError?> = _networkError
+
+//newsdata status
+    private val _articlesLoading = MutableStateFlow(false)
+    val articlesLoading: StateFlow<Boolean> = _articlesLoading
+
     fun GetArticles(){
 //Ensure the prior variables are cleared on additionall click of generate
-//        first deal with displaying the loading area
+//first deal with displaying the loading area
         _articlesLoading.value = true
-
-//        then call the api
+//then call the api
         val filter = InterestInput(
-//           check if an interest i specified, if not then use the generalised array for general headlines
+//check if an interest i specified, if not then use the generalised array for general headlines
             q= currentFeed.q,
             category = currentFeed.topic,
             country = currentFeed.location,
-            from = get1DaysBefore(),
-//            default will be publiched at
+//don't specify the from param to ensure many articles are found
+            from = "",
+//default will be published at
             sortBy = "relevance",
             pageSize = 100,
             page = 1
         )
-
         screenModelScope.launch {
             ApiResponse(filter)
             if (networkError.value!=null){
@@ -152,7 +139,7 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
                 updateDisplayWarning(true)
             }
             else{
-                //copy the results into a normal array
+//copy the results into a normal array
                 FormatResponse()
             }
         }
@@ -160,14 +147,11 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
 
     suspend fun ApiResponse(filter: InterestInput){
         //Make the request in a coroutine
-
             newsApiClient.getNews(filter = filter)
                 .onSuccess { _newsResponse.value = it }
                 .onError { _networkError.value = it }
-//end loading
-
-
     }
+
 //required to use lazy column
     var filteredArticles = mutableListOf<Article>()
 
@@ -177,29 +161,8 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
         _articlesLoading.value = false
     }
 
-
-//return the current day - 1 day prior
-    fun get1DaysBefore(): String {
-        // 1. Get today's date in the system's default time zone
-        val systemTimeZone: TimeZone = TimeZone.currentSystemDefault()
-        val today: LocalDate = Clock.System.todayIn(systemTimeZone)
-        // 2. Subtract 2 days using the minus() function and DateTimeUnit
-        //    This correctly handles month and year rollovers.
-        val oneDayPrior: LocalDate = today.minus(1, DateTimeUnit.DAY)
-
-        // 3. Extract components from the resulting date (two days ago)
-        val year = oneDayPrior.year
-        val month = oneDayPrior.monthNumber
-        val day = oneDayPrior.dayOfMonth
-        return ("$year-$month-$day")
-    }
-
 //<----------------------handel display of article and associative details------------------------------------------------>
- var displayArticle by mutableStateOf(false)
-    fun updateDisplayArticle(input: Boolean) {
-        displayArticle = input
-    }
-
+//this portion of variable anf functions are from the headlines viewmodel
  var articleSelected: Article? by mutableStateOf(Article(
      author = "",
      content = "",
@@ -210,7 +173,6 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
      url = "",
      urlToImage =""
  ))
-
     var articleIndex by mutableStateOf(0)
     fun updateArticleIndex(input: Int) {
         articleIndex = input
@@ -218,7 +180,6 @@ private val _newsResponse = MutableStateFlow<ArticleList?>(null)
     fun updateArticleSelected(index: Int) {
         articleSelected = filteredArticles[index]
     }
-
     @Composable
    fun GetImage(url:String){
         AsyncImage(

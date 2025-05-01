@@ -13,23 +13,20 @@ import com.shared.Resources
 import com.shared.Resources.getTabIcon
 
 object HomeTab:Tab{
-//    the content of the tab should hold the homepage.
+//the content of the tab should hold the homepage.
     @Composable
     override fun Content() {
-//        specifying the initial screen to be displayed for the tab
+//specifying the initial screen to be displayed for the tab
         Navigator(HomeScreen()){ navigator ->
             SlideTransition(navigator)
         }
     }
-
-
     override val options: TabOptions
         @Composable
         get() {
             val title = "AI summary"
-//            this icon itself doesnt need to be cached as it is only used here and no where else.
+//this icon itself doesn't need to be cached as it is only used here and no where else.
             val icon = (getTabIcon("home"))
-
             return remember {
                 TabOptions(
                     index = 0u,
