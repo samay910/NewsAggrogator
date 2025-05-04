@@ -19,8 +19,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import util.NetworkError
 import util.onError
@@ -152,30 +154,56 @@ class HomeViewmodel(
     }
 
 //this function gets the date from 2 days prior and formats it for the news api call
-    fun get7DaysBefore(): String {
+    fun get2DaysBefore(): String {
 //gets today's date in the system's default time zone
         val systemTimeZone: TimeZone = TimeZone.currentSystemDefault()
         val today: LocalDate = Clock.System.todayIn(systemTimeZone)
 //This correctly handles month and year rollovers.
-        val twoDaysAgo: LocalDate = today.minus(7, DateTimeUnit.DAY)
+        val twoDaysAgo: LocalDate = today.minus(2, DateTimeUnit.DAY)
         val year = twoDaysAgo.year
-        val month = twoDaysAgo.monthNumber
+        val month = twoDaysAgo.month
         val day = twoDaysAgo.dayOfMonth
         return ("$year-$month-$day")
     }
 
+    fun getToday(): String {
+        //gets today's date in the system's default time zone
+        val nowInstant = Clock.System.now()
+        //get the system's current default timezone
+        val systemTimeZone = TimeZone.currentSystemDefault()
+        //Convert the instant to the local date and time in that timezone
+        val localDateTime: LocalDateTime = nowInstant.toLocalDateTime(systemTimeZone)
+        //Convert LocalDateTime to its default ISO string representation
+        //This usually looks like YYYY-MM-DDTHH:mm:ss.nanoseconds as required by the API
+        val isoTime = localDateTime.toString()
+        //    The desired format has exactly 19 characters.
+        //    We take the first 19 characters to remove potential nanoseconds.
+        return isoTime.take(19)
+    }
+
 //Actually gets article data and stores it in the state flow
     suspend fun GetAritcles(){
+
+    //Ensure the prior variables are cleared on an additional click of generate
+    if (filteredArticles.isEmpty()==false){
+        _articlesLoading.value=false
+        updateDisplayWarning(false)
+        _newsResponse.value = null
+        _networkError.value = null
+        filteredArticles.clear()
+    }
+
         val filter = InterestInput(
 //the filter will be made from at least a single
             q=textFilter,
             category = category,
             country = country,
 //constructed based on the current date and time for newer articles to be considered only
-            from = get7DaysBefore(),
+            from = get2DaysBefore(),
             sortBy = "publishedAt",
             pageSize = 30,
-            page = 1
+            page = 1,
+            to = getToday()
         )
 //either relevant articles will be found or the user will be informed that the filters are not applicable right now and the summary will not be generated
         _articlesLoading.value = true // Set loading state to true before the API call

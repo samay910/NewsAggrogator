@@ -18,6 +18,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import util.NetworkError
 import util.onError
 import util.onSuccess
@@ -121,9 +125,10 @@ class InterestFeedViewmodel(
 //don't specify the from param to ensure many articles are found
             from = "",
 //default will be published at
-            sortBy = "relevance",
+            sortBy = "publishedAt",
             pageSize = 100,
-            page = 1
+            page = 1,
+            to = getToday()
         )
         screenModelScope.launch {
             ApiResponse(filter)
@@ -137,7 +142,20 @@ class InterestFeedViewmodel(
             }
         }
     }
-
+    fun getToday(): String {
+        //gets today's date in the system's default time zone
+        val nowInstant = Clock.System.now()
+        //get the system's current default timezone
+        val systemTimeZone = TimeZone.currentSystemDefault()
+        //Convert the instant to the local date and time in that timezone
+        val localDateTime: LocalDateTime = nowInstant.toLocalDateTime(systemTimeZone)
+        //Convert LocalDateTime to its default ISO string representation
+        //This usually looks like YYYY-MM-DDTHH:mm:ss.nanoseconds as required by the API
+        val isoTime = localDateTime.toString()
+        //    The desired format has exactly 19 characters.
+        //    We take the first 19 characters to remove potential nanoseconds.
+        return isoTime.take(19)
+    }
     suspend fun ApiResponse(filter: InterestInput){
         //Make the request in a coroutine
             newsApiClient.getNews(filter = filter)

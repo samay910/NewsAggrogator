@@ -13,7 +13,8 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-//the core purpose o fthis client implementation is to manage the intiial native requirements of the engines and make API calls from different services more specialised
+//the core purpose of this client implementation is to manage the intiial native
+//requirements of the engines and make API calls from different services more specialised
 fun createHttpClient(engine: HttpClientEngine): HttpClient {
     return HttpClient(engine) {
         install(Logging) {

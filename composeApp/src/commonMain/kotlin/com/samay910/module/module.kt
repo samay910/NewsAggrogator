@@ -15,7 +15,8 @@ import org.koin.dsl.module
 
 //this file ensures dependency injection using koin is possible on both platforms
 
-//this is fine for the API calls and network activity but not for the local database.To deal with this i initialise koin on both respective platforms and then add necessary additional modules
+//this is fine for the API calls and network activity but not for the local database.
+//To deal with this i initialise koin on both respective platforms and then add necessary additional modules
 val networkModule= module {
 //    create the actual HTTP client that will be used to call different API's
     single { createHttpClient(getHttpEngine()) }

@@ -20,8 +20,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import util.NetworkError
 import util.onError
@@ -95,9 +97,10 @@ class HeadlinesViewmodel(
             category = "",
             country = "",
             from = get1DaysBefore() ,
-            sortBy = "relevance",
+            sortBy = "publishedAt",
             pageSize = 50,
-            page = 1
+            page = 1,
+            to = getToday()
         )
         screenModelScope.launch {
             ApiResponse(filter)
@@ -127,7 +130,23 @@ class HeadlinesViewmodel(
         _articlesLoading.value = false
     }
 
-//Similar to the function from the homeviewmodel, instead of 2 days it is 1 to limit the results further
+    fun getToday(): String {
+    //gets today's date in the system's default time zone
+        val nowInstant = Clock.System.now()
+    //get the system's current default timezone
+        val systemTimeZone = TimeZone.currentSystemDefault()
+    //Convert the instant to the local date and time in that timezone
+        val localDateTime: LocalDateTime = nowInstant.toLocalDateTime(systemTimeZone)
+    //Convert LocalDateTime to its default ISO string representation
+    //This usually looks like YYYY-MM-DDTHH:mm:ss.nanoseconds as required by the API
+        val isoTime = localDateTime.toString()
+    //    The desired format has exactly 19 characters.
+    //    We take the first 19 characters to remove potential nanoseconds.
+        return isoTime.take(19)
+    }
+
+
+    //Similar to the function from the homeviewmodel, instead of 2 days it is 1 to limit the results further
     fun get1DaysBefore(): String {
         val systemTimeZone: TimeZone = TimeZone.currentSystemDefault()
         val today: LocalDate = Clock.System.todayIn(systemTimeZone)
