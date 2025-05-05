@@ -6,4 +6,5 @@ object Constants {
     val newsApiKey="598d979561414adfb32916550d4d8791"
     val geminiURL="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     val newsapiURL="https://newsapi.org/v2/everything"
+
 }
