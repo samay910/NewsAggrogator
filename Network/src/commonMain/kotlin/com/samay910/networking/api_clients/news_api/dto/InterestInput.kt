@@ -10,5 +10,6 @@ data class InterestInput(
     val from: String,
     val sortBy: String ,
     val pageSize: Int ,
-    val page: Int
+    val page: Int,
+    var to: String? = null
 )

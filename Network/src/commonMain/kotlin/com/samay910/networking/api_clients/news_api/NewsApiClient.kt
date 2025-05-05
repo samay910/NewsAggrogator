@@ -20,6 +20,9 @@ class NewsApiClient(
 //Uses the established http client and performs required api calls from that client
     private val httpClient: HttpClient
 ) {
+
+
+
 //specify in the filter that the domain restriction will be attempted but not strictly enforced -> restrictions of the api and available utilities in the free plan
     suspend fun getNews(filter: InterestInput):Result<ArticleList,NetworkError>{
         val api_key= Constants.newsApiKey
@@ -62,9 +65,12 @@ class NewsApiClient(
                                 if (filter.sortBy!=""){
                                     parameter("sortBy", filter.sortBy)
                                 }
+                                if (filter.to!=null){
+                                    parameter("to", filter.to)
+                                }
 //these are default parameters that are set based on prior research and knowledge of the api
                                 parameter("language", "en")
-                                parameter("searchin","title,description")
+                                parameter("searchIn","description")
                                 parameter("pageSize",filter.pageSize)
                                 parameter("page",1)
                             }
