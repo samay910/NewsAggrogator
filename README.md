@@ -1,19 +1,20 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Server.
+Guide to run the application locally:
+1.	Open android studio IDE and click 
+ 
+2.	Copy the URL from above and enter within the field specified and click clone:
+ 
+3.	Click trust this project:
+ 
+4.	Once the application is finished being built change the display to Project by clicking the dropdown circled below and selecting Project:  
+5.	Navigate to the file constants as shown in the side navigation below(Path: Network/src/commonMain/kotlin/com/samay910/networking/Constants.kt):
+ 
+6.	Add your API keys for geminiAPIKey and newsAPIKey in the string areas above with the keys;linked below below:
+   
 
-* `/composeApp` is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - `commonMain` is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    `iosMain` would be the right folder for such calls.
+8.	Optional :Specify any android device of your choosing if you don’t want to use the default:
+ 
 
-* `/iosApp` contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform, 
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
-
-* `/server` is for the Ktor server application.
-
-* `/shared` is for the code that will be shared between all targets in the project.
-  The most important subfolder is `commonMain`. If preferred, you can add code to the platform-specific folders here too.
+9.	Once the keys have been successfully added simply run the application as shown below; wait a few minutes for the device to load and the application will open soon after. Then simply interact with the application any way you would like to:
+ 
 
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
